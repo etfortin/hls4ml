@@ -1,7 +1,7 @@
 //
-//    rfnoc-hls-neuralnet: Vivado HLS code for neural-net building blocks
+//    rfnoc-hls-neuralnet: Quartus HLS code for neural-net building blocks
 //
-//    Copyright (C) 2017 EJ Kreinar
+//    Copyright (C) 2020 E.FORTIN
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -29,8 +29,7 @@
 #include "firmware/parameters.h"
 #include "firmware/myproject.h"
 
-//#define CHECKPOINT 5000
-#define CHECKPOINT 1
+#define CHECKPOINT 5000
 
 int main(int argc, char **argv)
 {
@@ -50,8 +49,6 @@ int main(int argc, char **argv)
 
   int num_iterations = std::count(std::istreambuf_iterator<char>(fcount),
                    std::istreambuf_iterator<char>(), '\n');
-  //int num_iterations = std::count(std::istreambuf_iterator<char>(fin),
-  //                 std::istreambuf_iterator<char>(), '\n');
   if (fin.is_open() && fpr.is_open()) {
     //hls-fpga-machine-learning insert component-io
     std::vector<std::vector<float>> pr(num_iterations,std::vector<float>());
