@@ -89,7 +89,6 @@ def get_qkeras_quantization(layer, keras_layer):
 layer_handlers = {}
 
 def register_keras_layer_handler(layer_name, handler_func):
-    print('layer_name',layer_name, 'handler_func',handler_func)
     if layer_name in layer_handlers:
         raise Exception('Layer {} already registered'.format(layer_name))
     else:
@@ -123,7 +122,7 @@ def parse_default_keras_layer(keras_layer, input_names):
 
 activation_type = []
 
-def keras_to_hls(config): 
+def keras_to_hls(config):
 
     ######################
     ##  Do translation
@@ -136,13 +135,12 @@ def keras_to_hls(config):
         # Model instance passed in config from API
         model_arch = json.loads(config['KerasModel'].to_json())
         reader = KerasModelReader(config['KerasModel'])
-    elif 'KerasJson' in config:                                             
+    elif 'KerasJson' in config:
         # Extract model architecture from json
         with open(config['KerasJson']) as json_file:
             model_arch = json.load(json_file)
         reader = KerasFileReader(config)
     elif 'KerasH5' in config:
-        print("terceiro")
         # Model arch and weights are in H5 file (from model.save() function)
         with h5py.File(config['KerasH5'], mode='r') as h5file:
             # Load the configuration from h5 using json's decode
@@ -174,10 +172,9 @@ def keras_to_hls(config):
     layer_config = None
     layer_activation = []
 
-    if model_arch['class_name'] == 'Sequential':  #model_arch contem o json  
+    if model_arch['class_name'] == 'Sequential': 
         print('Interpreting Sequential')
-        layer_config = model_arch['config']  
-        
+        layer_config = model_arch['config']
         if 'layers' in layer_config: # Newer Keras versions have 'layers' in 'config' key   
             layer_config = layer_config['layers']
         if layer_config[0]['class_name'] != 'InputLayer':
