@@ -29,8 +29,7 @@
 #include "firmware/parameters.h"
 #include "firmware/myproject.h"
 
-//#define CHECKPOINT 5000
-#define CHECKPOINT 1
+#define CHECKPOINT 10000
 
 int main(int argc, char **argv)
 {
