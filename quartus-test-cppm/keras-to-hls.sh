@@ -109,6 +109,6 @@ do
    echo "    Strategy: ${strategy} " >> ${file}
 
    ${pycmd} ../scripts/hls4ml convert -c ${file} || exit 1
-   rm ${file}
+#   rm ${file}
    echo ""
 done
