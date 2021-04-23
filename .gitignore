@@ -9,4 +9,5 @@ vivado_prj
 my-hls-test
 *.tar.gz
 testing/
+**/quartus_prj/
 .DS_Store

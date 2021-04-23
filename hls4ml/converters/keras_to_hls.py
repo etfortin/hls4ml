@@ -20,7 +20,7 @@ class KerasFileReader(object):
     def _find_data(self, layer_name, var_name):
         def h5_visitor_func(name):
             if var_name in name:
-                return name
+                return name 
 
         if 'model_weights' in list(self.h5file.keys()): # h5 file comes from model.save()
             layer_path = 'model_weights/{}'.format(layer_name)
@@ -114,6 +114,7 @@ def parse_default_keras_layer(keras_layer, input_names):
 
     if 'activation' in keras_layer['config']:
         layer['activation'] = keras_layer['config']['activation']
+
     if 'epsilon' in keras_layer['config']:
         layer['epsilon'] = keras_layer['config']['epsilon']
 
@@ -235,7 +236,7 @@ def keras_to_hls(config):
 
         print('Layer name: {}, layer type: {}, current shape: {}'.format(layer['name'], layer['class_name'], input_shapes))
         layer_list.append( layer )
-        if 'activation' in layer and layer['class_name'] not in ['Activation', 'LeakyReLU', 'ThresholdedReLU', 'ELU', 'PReLU', 'Softmax']:# + qkeras_layers:
+        if 'activation' in layer and layer['class_name'] not in ['Activation', 'LeakyReLU', 'ThresholdedReLU', 'ELU', 'PReLU', 'Softmax', 'LSTM']:# + qkeras_layers:
             act_layer = {}
             act_layer['name'] = layer['name'] + '_' + layer['activation']
             act_layer['activation'] = layer['activation']

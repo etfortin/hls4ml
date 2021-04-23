@@ -888,6 +888,51 @@ class Transpose(Layer):
 
         return self._config_template.format(**params)
 
+class Lstm(Layer):
+    def initialize(self):
+        #Output data definitions
+        shape = [self.get_attr('n_in')]
+        dims = ['OUT_HEIGHT_{}'.format(self.index)]
+        self.add_output_variable(shape, dims)
+
+
+        data  = self.model.get_weights_data(self.name, 'kernel')
+        data2 = self.model.get_weights_data(self.name, 'recurrent_kernel')
+        data3 = self.model.get_weights_data(self.name, 'bias')
+        print("data3:")
+        print(data3)
+        #print(self.get_layers.get_weights())
+        weight_types=["i","f","c","o"]
+        for i in range (0,4):
+          self.add_weights_variable(name='weight_%s'% weight_types [i], var_name='kernel_%s_{index}' % weight_types [i], data=data[0][i*self.get_attr('n_in'):(i+1)*(self.get_attr('n_in'))], quantizer=self.get_attr('weight_quantizer'), compression=None)
+          self.add_weights_variable(name='recurrent_weight_%s' % weight_types [i], var_name='recurrent_kernel_%s_{index}' % weight_types [i], data=data2[0:self.get_attr('n_in'),i*self.get_attr('n_in'):(i+1)*(self.get_attr('n_in'))], quantizer=self.get_attr('weight_quantizer'), compression=None)
+          self.add_weights_variable(name='bias_%s'% weight_types [i], var_name='bias_%s_{index}' % weight_types [i], data=data3[i*self.get_attr('n_in'):(i+1)*(self.get_attr('n_in'))], quantizer=self.get_attr('weight_quantizer'), compression=None)
+
+
+        
+
+
+
+    def function_cpp(self):
+        params = self._default_function_params()
+        params['weights']=""
+        for i in ["kernel","recurrent_kernel","bias"]:
+          for j in ["i","f","c","o"]:
+            params['weights'] += ""+ i + "_" + j + "_" + str(self.index)
+            if not(i == "bias" and j == "o"):
+              params['weights'] +=","
+      #  params['algorithm'] = self.get_attr('algorithm')
+
+        return [self._function_template.format(**params)]
+
+    def config_cpp(self):
+        params = self._default_config_params()
+        params['n_in'] = self.get_attr('n_in')
+        params['n_timestamp'] = self.get_attr('n_timestamp')
+
+        return self._config_template.format(**params)
+
+
 layer_map = {
     'Input'              : Input,
     'InputLayer'         : Input,
@@ -917,6 +962,7 @@ layer_map = {
     'Concatenate'        : Concatenate,
     'Resize'             : Resize,
     'Transpose'          : Transpose,
+    'LSTM'               : Lstm,
     # TensorFlow-specific layers:
     'BiasAdd'            : BiasAdd,
 }

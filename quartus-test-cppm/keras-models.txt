@@ -14,10 +14,11 @@
 # Lines starting with "#" are ignored.
 #
 
+KERAS_LSTM c:2.5 f:1SG280HU2F50E2VG
 #KERAS_1layer 
 #KERAS_3layer 
 #KERAS_3layer_batch_norm 
 #KERAS_3layer_binary_smaller 
 #KERAS_3layer_ternary_small
 #KERAS_dense_16x100x100x100x100x100x5 r:100
-keras_bnn t:"<4,4>"
+#keras_bnn t:"<4,4>"

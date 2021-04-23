@@ -27,7 +27,7 @@
 #include "firmware/parameters.h"
 #include "firmware/myproject.h"
 
-#define CHECKPOINT 5000
+#define CHECKPOINT 10000
 
 // This function is written to avoid stringstream, which is
 // not supported in cosim 20.1, and because strtok
@@ -52,26 +52,30 @@ bool nextToken(const std::string& str, std::size_t& pos, float& val)
 int main(int argc, char **argv)
 {
   //load input data from text file
+  std::ifstream fcount("tb_data/tb_input_features.dat");
   std::ifstream fin("tb_data/tb_input_features.dat");
   //load predictions from text file
   std::ifstream fpr("tb_data/tb_output_predictions.dat");
-
+  std::cout << "Openning files for simulations" << std::endl;
 
   std::string RESULTS_LOG = "tb_data/results.log";
   std::ofstream fout(RESULTS_LOG);
 
   std::string iline;
   std::string pline;
+  int e = 0;
 
+  int num_iterations = std::count(std::istreambuf_iterator<char>(fcount),
+                   std::istreambuf_iterator<char>(), '\n');
+  //int num_iterations = std::count(std::istreambuf_iterator<char>(fin),
+  //                 std::istreambuf_iterator<char>(), '\n');
   if (fin.is_open() && fpr.is_open()) {
     //hls-fpga-machine-learning insert component-io
-    std::vector<std::vector<float> > predictions;
-    unsigned int num_iterations = 0;
-    for (; std::getline(fin,iline) && std::getline (fpr,pline); num_iterations++) {
-      if (num_iterations % CHECKPOINT == 0) {
-	std::cout << "Processing input "  << num_iterations << std::endl;
-      }
-
+    std::vector<std::vector<float>> pr(num_iterations,std::vector<float>());
+    while ( std::getline(fin,iline) && std::getline (fpr,pline) ) {
+      if (e % CHECKPOINT == 0) std::cout << "Processing input " << e << std::endl;
+      char* cstr=const_cast<char*>(iline.c_str());
+      char* current;
       std::vector<float> in;
       std::vector<float> pr;
       float current;
@@ -104,10 +108,9 @@ int main(int argc, char **argv)
     // Do this separately to avoid vector reallocation
     //hls-fpga-machine-learning insert top-level-function
 
-    //hls-fpga-machine-learning insert run
-
-
-    for(int j = 0; j < num_iterations; j++) {
+      e++;
+      //hls-fpga-machine-learning insert top-level-function
+    for(int j = 0; j < e; j++) {
       //hls-fpga-machine-learning insert tb-output
       if (j % CHECKPOINT == 0) {
         std::cout << "Predictions" << std::endl;
@@ -127,13 +130,12 @@ int main(int argc, char **argv)
 
     //hls-fpga-machine-learning insert run
 
-    for (int j = 0; j < num_iterations; j++) {
-      //hls-fpga-machine-learning insert output
+      for (int j = 0; j < num_iterations; j++) {
+        //hls-fpga-machine-learning insert output
 
-      //hls-fpga-machine-learning insert tb-output
+       //hls-fpga-machine-learning insert tb-output
     }
   }
-
   fout.close();
   std::cout << "INFO: Saved inference results to file: " << RESULTS_LOG << std::endl;
 

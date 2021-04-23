@@ -23,5 +23,10 @@ clean:
 myproject-fpga: CXXFLAGS := $(CXXFLAGS) 
 #force-dsp: CXXFLAGS := $(CXXFLAGS) --quartus-compile
 
+.PHONY: myproject-ctest
+myproject-ctest: 
+	$(CXX) -march=x86-64 $(SOURCE_FILES) -o $@
+
 $(TARGETS) : $(SOURCE_FILES) $(HEADER_FILES)
 	$(CXX) $(CXXFLAGS) $(DEBUG_FLAGS) $(SOURCE_FILES) -o $@
+

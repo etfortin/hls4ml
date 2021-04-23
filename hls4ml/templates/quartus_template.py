@@ -179,6 +179,17 @@ transpose_config_template = """struct config{index} : nnet::transpose_config {{
     static const unsigned perm[3] = {{{perm_str}}};
 }};\n"""
 
+
+
+####################################### LSTM
+lstm_config_template = """struct config{index} : lstm_config {{
+    static const unsigned n_in = {n_in};
+    static const unsigned n_out = {n_in};
+    static const unsigned n_timestamp = {n_timestamp};
+}};\n"""
+lstm_function_template = 'lstm_network<{input_t}, {output_t}, {config} ,{input_t}>({input}[0], {output},{weights});'
+lstm_include_list = ['nnet_utils/lstm_cell.h']
+
 dense_function_template = 'nnet::dense{strategy}<{input_t}, {output_t}, {config}>({input}, {output}, {w}, {b});'
 batchnorm_function_template = 'nnet::normalize<{input_t}, {output_t}, {config}>({input}, {output}, {scale}, {bias});'
 #conv1d_function_template = 'nnet::conv_1d_{strategy}_{data_format}<{input_t}, {output_t}, {config}>({input}, {output}, {w}, {b});'
@@ -213,6 +224,7 @@ class QuartusBackend(Backend):
         self.register_templates('ParametrizedActivation' , param_activ_function_template, activ_config_template, activ_include_list)
         self.register_templates('PReLU'                  , param_activ_function_template, activ_config_template, activ_include_list)
         self.register_templates('Softmax'                , activ_function_template,       softmax_config_template, activ_include_list)
+        self.register_templates('Lstm'                , lstm_function_template,       lstm_config_template, lstm_include_list)
         #self.register_templates('Pooling1D'              , pooling1d_function_template,   pooling1d_config_template, pooling_include_list)
         #self.register_templates('Pooling2D'              , pooling2d_function_template,   pooling2d_config_template, pooling_include_list)
         #self.register_templates('Merge'                  , merge_function_template,       merge_config_template, merge_include_list)
