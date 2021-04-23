@@ -27,8 +27,7 @@
 #include "firmware/parameters.h"
 #include "firmware/myproject.h"
 
-//#define CHECKPOINT 5000
-#define CHECKPOINT 1
+#define CHECKPOINT 10000
 
 // This function is written to avoid stringstream, which is
 // not supported in cosim 20.1, and because strtok
@@ -64,7 +63,6 @@ int main(int argc, char **argv)
 
   std::string iline;
   std::string pline;
-
   int e = 0;
 
   int num_iterations = 1000;

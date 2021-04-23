@@ -48,7 +48,7 @@ function run_simulation {
    dir=$1
    echo "Running sim in ${dir}"
    cd ${dir}
-   cmd="./myproject-fpga"
+   cmd="make myproject-fpga"
    eval ${cmd}
    if [ $? -eq 1 ]; then
       touch SIM_FAILED
@@ -86,32 +86,13 @@ fi
 
 cd "${basedir}"
 
-# Use .tar.gz archives to create separate project directories
-for archive in *.tar.gz ; do
-   filename="${archive%%.*}"
-   dir="${filename}-build"
-   tarpath=`tar -tf "${archive}" | grep -m1 "${filename}"`
-   slashes="${tarpath//[^\/]}"
-   mkdir -p "${dir}" && tar -xzf "${archive}" -C "${dir}" --strip-components ${#slashes}
+for project in $(ls -d */) ; do
+  echo "$project"
+  if [ $ctest -eq 1 ]; then
+    run_ctest "${project}"
+    exit ${failed}
+  fi
+  run_quartus "${project}"
+  run_simulation "${project}"
 done
-#run ctest
-# Run sequentially
-if [ $ctest -eq 1 ]; then
-  for dir in *-"build" ; do
-     run_ctest "${dir}"
-  done
-  exit ${failed}
-fi
-# Run sequentially
-for dir in *-"build" ; do
-   run_quartus "${dir}"
-done
-
-# Check for build errors
-for dir in *-"build" ; do
-   run_simulation "${dir}"
-done
-
-#cd "${rundir}"
-
 exit ${failed}

@@ -31,11 +31,6 @@ struct lstm_config : public nnet::activ_config{
 
 
 
-#ifndef SIMULATION_TIMES
-  #define SIMULATION_TIMES 1
-#endif
-
-
 #ifndef TIMESTAMP_UNROLLING
   #define TIMESTAMP_UNROLLING
 #endif
@@ -165,28 +160,6 @@ void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
       //}
   }
 
-    std::cout<<std::endl;
-}
-  #endif*/
-
-  //output - verification
-
-
-
-  /* DENSE LAYER
-  fixed_p output = 0;
-  #pragma unroll
-  for (int x = 0; x < CONFIG_T::n_in; x++) {
-    output += hidden_state[x][CONFIG_T::n_timestamp] * weight_dense::weights[x];
-  }
-
-  output = output + weight_dense::dense_bias;
-
-  if(output < 0){ output = 0; }
-  */
-  //Normalisation factor
-
-//  return output;
 }
 
 template<class data_T, typename CONFIG_T, typename WEIGHT_T>

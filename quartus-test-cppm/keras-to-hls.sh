@@ -108,7 +108,7 @@ do
    echo "    Precision: ${type} " >> ${file}
    echo "    Strategy: ${strategy} " >> ${file}
 
-   ${pycmd} ../scripts/hls4ml convert -c ${file} || exit 1 #executa python hls4ml convert -c quartus_proj/KERAS_LSTM-python3.yml
-   rm ${file}
+   ${pycmd} ../scripts/hls4ml convert -c ${file} || exit 1
+#   rm ${file}
    echo ""
 done
