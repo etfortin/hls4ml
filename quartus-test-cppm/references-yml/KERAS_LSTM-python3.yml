@@ -1,0 +1,23 @@
+KerasJson: ./models/KERAS_LSTM.json
+KerasH5:   ./models/KERAS_LSTM_weights.h5
+OutputDir: quartus_prj/KERAS_LSTM-CPPM
+ProjectName: myproject
+FPGAPart: 1SG280HU2F50E2VG
+ClockPeriod: 2.5
+Backend: Quartus
+
+IOType: io_parallel
+HLSConfig:
+  Model:
+    ReuseFactor: 1
+    Precision: <24,5> 
+    Strategy: Latency 
+  LayerType : 
+    Activation:
+      table_size : 4096
+      Precision: <24,5,true>
+    Dense:
+      Precision: <24,5,true>
+    Lstm:
+      table_size : 4096
+      Precision: <24,5,true>

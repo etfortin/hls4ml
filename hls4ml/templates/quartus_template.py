@@ -186,6 +186,7 @@ lstm_config_template = """struct config{index} : lstm_config {{
     static const unsigned n_in = {n_in};
     static const unsigned n_out = {n_in};
     static const unsigned n_timestamp = {n_timestamp};
+    static const unsigned table_size = {table_size};
 }};\n"""
 lstm_function_template = 'lstm_network<{input_t}, {output_t}, {config} ,{input_t}>({input}[0], {output},{weights});'
 lstm_include_list = ['nnet_utils/lstm_cell.h']

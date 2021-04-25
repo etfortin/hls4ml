@@ -54,7 +54,7 @@ int main(int argc, char **argv)
   if (fin.is_open() && fpr.is_open()) {
     //hls-fpga-machine-learning insert component-io
     std::vector<std::vector<float>> pr(num_iterations,std::vector<float>());
-    while ( std::getline(fin,iline) && std::getline (fpr,pline) ) {
+    while ( std::getline(fin,iline) && std::getline (fpr,pline) && e< num_iterations) {
       if (e % CHECKPOINT == 0) std::cout << "Processing input " << e << std::endl;
       char* cstr=const_cast<char*>(iline.c_str());
       char* current;
@@ -74,8 +74,10 @@ int main(int argc, char **argv)
 
       //hls-fpga-machine-learning insert data
 
-      e++;
       //hls-fpga-machine-learning insert top-level-function
+      e++;
+    }
+    //hls-fpga-machine-learning insert run-all-function
     for(int j = 0; j < e; j++) {
       //hls-fpga-machine-learning insert tb-output
       if (j % CHECKPOINT == 0) {
