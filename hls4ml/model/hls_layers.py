@@ -902,9 +902,9 @@ class Lstm(Layer):
         #print(self.get_layers.get_weights())
         weight_types=["i","f","c","o"]
         for i in range (0,4):
-          self.add_weights_variable(name='weight_%s'% weight_types [i], var_name='kernel_%s_{index}' % weight_types [i], data=data[0][i*self.get_attr('n_in'):(i+1)*(self.get_attr('n_in'))], quantizer=self.get_attr('weight_quantizer'), compression=None)
-          self.add_weights_variable(name='recurrent_weight_%s' % weight_types [i], var_name='recurrent_kernel_%s_{index}' % weight_types [i], data=data2[0:self.get_attr('n_in'),i*self.get_attr('n_in'):(i+1)*(self.get_attr('n_in'))], quantizer=self.get_attr('weight_quantizer'), compression=None)
-          self.add_weights_variable(name='bias_%s'% weight_types [i], var_name='bias_%s_{index}' % weight_types [i], data=data3[i*self.get_attr('n_in'):(i+1)*(self.get_attr('n_in'))], quantizer=self.get_attr('weight_quantizer'), compression=None)
+          self.add_weights_variable(name='weight_{}'.format(weight_types[i]), var_name='kernel_{}_{{index}}'.format(weight_types [i]) , data=data[0][i*self.get_attr('n_in'):(i+1)*(self.get_attr('n_in'))], quantizer=self.get_attr('weight_quantizer'), compression=None)
+          self.add_weights_variable(name='recurrent_weight_{}'.format( weight_types [i] ), var_name='recurrent_kernel_{}_{{index}}'.format(weight_types [i]), data=data2[0:self.get_attr('n_in'),i*self.get_attr('n_in'):(i+1)*(self.get_attr('n_in'))], quantizer=self.get_attr('weight_quantizer'), compression=None)
+          self.add_weights_variable(name='bias_{}'.format(weight_types [i]), var_name='bias_{}_{{index}}'.format(weight_types [i]), data=data3[i*self.get_attr('n_in'):(i+1)*(self.get_attr('n_in'))], quantizer=self.get_attr('weight_quantizer'), compression=None)
 
         print(self.attributes)
 

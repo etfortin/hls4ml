@@ -187,7 +187,7 @@ void lstm_cell(
         data_T gate_c[lstm_config::n_in] hls_register;
         data_T gate_o[lstm_config::n_in] hls_register;
         data_T gate_ic[lstm_config::n_in] hls_register;
-        data_T gate_forgot[lstm_config::n_in] hls_register;
+        data_T gate_forget[lstm_config::n_in] hls_register;
 
          data_T h[lstm_config::n_in] /*hls_register*/;
 
@@ -248,9 +248,9 @@ void lstm_cell(
 
 
         //-----------Forgot gate Calculation
-        nnet::dense_tanh<data_T,data_T,CONFIG_T>(cell_act_add, gate_forgot); //activation
+        nnet::dense_tanh<data_T,data_T,CONFIG_T>(cell_act_add, gate_forget); //activation
 
-        multiply_vectors<data_T,data_T,CONFIG_T>(gate_o, gate_forgot ,  h);
+        multiply_vectors<data_T,data_T,CONFIG_T>(gate_o, gate_forget ,  h);
 
        OUTPUT_WRITE_LOOP:
         #pragma unroll
