@@ -130,8 +130,10 @@ class QuartusWriter(Writer):
                             name = var.definition_cpp_name()
                             newline += '    ' + 'hls_register outputdat ' + name + ';\n'
                             var.name += '.data'
-                 #   if layer.get_attr('activation') == 'tanh':
-                 #       layer.set_attr('activation') == 'dense_tanh'
+                    if layer.get_attr('activation') == 'tanh':
+                        layer.set_attr('activation','dense_tanh') 
+                    if layer.get_attr('recurrent_activation') == 'tanh':
+                        layer.set_attr('recurrent_activation','dense_tanh') 
                     func = layer.function_cpp()
                     if func:
                         for line in func:
@@ -295,19 +297,23 @@ class QuartusWriter(Writer):
                 newline = line.replace('myproject', model.config.get_project_name())
             elif '//hls-fpga-machine-learning insert data' in line:
                 newline = line
-                newline += '      std::vector<float>::const_iterator in_begin = in.cbegin();\n'
-                newline += '      std::vector<float>::const_iterator in_end;\n'
-                for inp in model.get_input_variables():
-                    newline += '      in_end = in_begin + ({});\n'.format(inp.size_cpp())
-                    newline += '      std::copy(in_begin, in_end, {});\n'.format(inp.cppname+'[e].data')
-                    newline += '      in_begin = in_end;\n'
+                newline += indent+'for (int i=0 ; i < N_INPUT_1_1*N_INPUT_2_1; i++){\n'
+                newline += indent+'  lstm_input[e].data[i]=in[i];\n'
+                newline += indent+'}\n'
+
+                #newline += '      std::vector<float>::const_iterator in_begin = in.cbegin();\n'
+                #newline += '      std::vector<float>::const_iterator in_end;\n'
+                #for inp in model.get_input_variables():
+                #    newline += '      in_end = in_begin + ({});\n'.format(inp.size_cpp())
+                #    newline += '      std::copy(in_begin, in_end, {});\n'.format(inp.cppname+'[e].data')
+                #    newline += '      in_begin = in_end;\n'
             elif '//hls-fpga-machine-learning insert component-io' in line:
                 newline = line
                 for inp in model.get_input_variables():
-                    newline += indent + 'inputdat ' + inp.definition_cpp_name() + '[num_iterations];\n'
+                    newline += indent + 'inputdat *' + inp.definition_cpp_name() + '=new inputdat[num_iterations];\n'
                 for out in model.get_output_variables():
                     # brace-init zeros the array out because we use std=c++0x
-                    newline += indent + 'outputdat ' + out.definition_cpp_name() + '[num_iterations];\n'
+                    newline += indent + 'outputdat *' + out.definition_cpp_name() +' =new outputdat[num_iterations];\n'
             elif '//hls-fpga-machine-learning insert zero' in line:
                 newline = line
                 for inp in model.get_input_variables():
@@ -322,7 +328,8 @@ class QuartusWriter(Writer):
 
                 top_level = indent + 'ihc_hls_enqueue(&{}, {}, {});\n'.format(output_vars+'[e]', model.config.get_project_name(), input_vars+'[e]')
                 newline += top_level
-                newline += '    ' + '}\n'
+            elif '//hls-fpga-machine-learning insert run-all-function' in line:
+                newline = line
                 newline += '    ' + 'ihc_hls_component_run_all({});\n'.format(model.config.get_project_name())
             elif '//hls-fpga-machine-learning insert second-top-level-function' in line:
                 newline = line
@@ -330,7 +337,7 @@ class QuartusWriter(Writer):
                 input_vars = ','.join([i.cppname for i in model.get_input_variables()])
                 output_vars = ','.join([o.cppname for o in model.get_output_variables()])
 
-                newline += indent + 'std::fill_n({}, {}, 0.);\n'.format(inp.cppname+'[i].data', inp.size_cpp())
+                newline += indent + 'std::fill_n({}, {}, 0.5);\n'.format(inp.cppname+'[i].data', inp.size_cpp())
 
                 top_level = indent + 'ihc_hls_enqueue(&{}, {}, {});\n'.format(output_vars+'[i]', model.config.get_project_name(), input_vars+'[i]')
                 newline += top_level
@@ -515,7 +522,7 @@ class QuartusWriter(Writer):
         ## elu_table
         ###################
         for layer in model.get_layers():
-            if(layer.get_attr('activation') == 'elu'):
+            if(layer.get_attr('activation') == 'elu' or layer.get_attr('recurrent_activation') == 'elu'):
                 table_size = layer.get_attr('table_size')
             else:
                 table_size = 1024
@@ -550,10 +557,10 @@ class QuartusWriter(Writer):
         ## sigmoid_table
         ###################
         for layer in model.get_layers():
-            if(layer.get_attr('activation') == 'sigmoid'):
+            if(layer.get_attr('activation') == 'sigmoid' or layer.get_attr('recurrent_activation') == 'sigmoid'):
                 table_size = layer.get_attr('table_size')
             else:
-                table_size = 1024
+                table_size = 4096
 
         table_name = 'sigmoid_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
@@ -575,20 +582,23 @@ class QuartusWriter(Writer):
             in_val = 2*8.0*(i-float(table_size)/2.0)/float(table_size)
             real_val = 1.0 / (1 + np.exp(-in_val))
             h_file.write(sep + str(real_val))
-            sep = ", "
+            sep = ", \n"
 
-        h_file.write("};\n")
+        h_file.write("};")
         h_file.write("\n#endif\n")
         h_file.close()
 
         ###################
         ## tanh_table
         ###################
+        table_size=0
         for layer in model.get_layers():
-            if(layer.get_attr('activation') == 'dense_tanh'):
+            print("LAYER:",layer)
+            print("LAYER:",layer.get_attr('recurrent_activation'))
+            if(layer.get_attr('activation') == 'dense_tanh' or layer.get_attr('recurrent_activation') == 'dense_tanh' ):
                 table_size = layer.get_attr('table_size')
             else:
-                table_size = 1024
+                table_size=max(table_size,1024)
 
         table_name = 'tanh_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
@@ -619,11 +629,12 @@ class QuartusWriter(Writer):
         ###################
         ## softplus_table
         ###################
+        table_size=0
         for layer in model.get_layers():
-            if(layer.get_attr('activation') == 'softplus'):
+            if(layer.get_attr('activation') == 'softplus' or layer.get_attr('recurrent_activation') == 'softplus'):
                 table_size = layer.get_attr('table_size')
             else:
-                table_size = 1024
+                table_size=max(table_size,1024)
 
         table_name = 'softplus_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
@@ -654,11 +665,12 @@ class QuartusWriter(Writer):
         ###################
         ## softsign_table
         ###################
+        table_size=0
         for layer in model.get_layers():
-            if(layer.get_attr('activation') == 'softsign'):
+            if(layer.get_attr('activation') == 'softsign' or layer.get_attr('recurrent_activation') == 'softsign'):
                 table_size = layer.get_attr('table_size')
             else:
-                table_size = 1024
+                table_size=max(table_size,1024)
 
         table_name = 'softsign_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
@@ -689,11 +701,13 @@ class QuartusWriter(Writer):
         ###################
         ## selu_table
         ###################
+        table_size=0
         for layer in model.get_layers():
-            if(layer.get_attr('activation') == 'selu'):
+            if(layer.get_attr('activation') == 'selu' or layer.get_attr('recurrent_activation') == 'selu'):
                 table_size = layer.get_attr('table_size')
             else:
-                table_size = 1024
+                table_size=max(table_size,1024)
+
 
         table_name = 'selu_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
@@ -724,11 +738,12 @@ class QuartusWriter(Writer):
         ###################
         ## exp_table
         ###################
+        table_size=0
         for layer in model.get_layers():
-            if(layer.get_attr('activation') == 'softmax'):
+            if(layer.get_attr('activation') == 'softmax' or layer.get_attr('recurrent_activation') == 'softmax'):
                 table_size = layer.get_attr('table_size')
             else:
-                table_size = 1024
+                table_size=max(table_size,1024)
 
         table_name = 'exp_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
@@ -759,11 +774,12 @@ class QuartusWriter(Writer):
         ###################
         ## invert_table
         ###################
+        table_size=0
         for layer in model.get_layers():
-            if(layer.get_attr('activation') == 'softmax'):
+            if(layer.get_attr('activation') == 'softmax' or layer.get_attr('recurrent_activation') == 'softmax'):
                 table_size = layer.get_attr('table_size')
             else:
-                table_size = 1024
+                table_size=max(table_size,1024)
 
         table_name = 'invert_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
