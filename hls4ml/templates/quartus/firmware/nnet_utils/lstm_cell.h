@@ -149,7 +149,7 @@ void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
   #pragma unroll
 
 
-/*
+
   #ifndef HLS_SYNTHESIS
     for (int i=0; i<CONFIG_T::n_timestamp+1; i++){
       std::cout<< "hidden state for time " << i << " is : ";
