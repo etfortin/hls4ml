@@ -132,6 +132,8 @@ class QuartusWriter(Writer):
                             var.name += '.data'
                     if layer.get_attr('activation') == 'tanh':
                         layer.set_attr('activation','dense_tanh') 
+                    if layer.get_attr('recurrent_activation') == 'tanh':
+                        layer.set_attr('recurrent_activation','dense_tanh') 
                     func = layer.function_cpp()
                     if func:
                         for line in func:
