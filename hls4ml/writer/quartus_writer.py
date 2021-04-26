@@ -65,7 +65,7 @@ class QuartusWriter(Writer):
         h_file.close()
 
     def write_project_dir(self, model):
-        print("FOI?")
+
         if not os.path.isdir("{}/firmware/weights".format(model.config.get_output_dir())):
             os.makedirs("{}/firmware/weights".format(model.config.get_output_dir()))
 
@@ -73,7 +73,7 @@ class QuartusWriter(Writer):
         ###################
         ## myproject.cpp
         ###################
-        print("FOI?")
+
         filedir = os.path.dirname(os.path.abspath(__file__))
         f = open(os.path.join(filedir,'../templates/quartus/firmware/myproject.cpp'),'r')
         fout = open('{}/firmware/{}.cpp'.format(model.config.get_output_dir(), model.config.get_project_name()),'w')
@@ -131,8 +131,8 @@ class QuartusWriter(Writer):
                             name = var.definition_cpp_name()
                             newline += '    ' + 'hls_register outputdat ' + name + ';\n'
                             var.name += '.data'
-                 #   if layer.get_attr('activation') == 'tanh':
-                 #       layer.set_attr('activation') == 'dense_tanh'
+                    #if layer.get_attr('activation') == 'tanh':
+                    #    layer.set_attr('activation','dense_tanh')
                     func = layer.function_cpp()
                     if func:
                         for line in func:
@@ -245,9 +245,7 @@ class QuartusWriter(Writer):
             elif "//hls-fpga-machine-learning insert layer-config" in line:
                 newline = line
                 for layer in model.get_layers():
-                    print('Parametre1',layer)
                     config = layer.config_cpp()
-                    print('Parametre2',config)
                     if config:
                         newline += config + '\n'
             else:
@@ -438,7 +436,7 @@ class QuartusWriter(Writer):
         ###################
         # Makefile
         ###################
-        
+
         filedir = os.path.dirname(os.path.abspath(__file__))
         f = open(os.path.join(filedir,'../templates/quartus/Makefile'),'r')
         fout = open('{}/Makefile'.format(model.config.get_output_dir()),'w')
@@ -499,7 +497,7 @@ class QuartusWriter(Writer):
             rmtree(dstpath)
 
         copytree(srcpath, dstpath)
-   
+
     def write_activation_tables(self, model):
 
         ###################
@@ -806,65 +804,55 @@ class QuartusWriter(Writer):
             archive.add(model.config.get_output_dir(), recursive=True)
 
     def write_activation_lstm(self, model): #layer_rec_activation,layer_activation
+        if(model.inputs[0] == 'lstm_input'):
+            dstpath = './{}/firmware/nnet_utils/lstm_cell.h'.format(model.config.get_output_dir())
+            activation_lstm = 0
 
-         dstpath = './{}/firmware/nnet_utils/lstm_cell.h'.format(model.config.get_output_dir())
+            for layer in model.get_layers():
+                if(activation_lstm == 1):
+                    layer_activation = layer.get_attr('activation')
+                    layer_rec_activation =layer.get_attr('recurrent_activation')
+                    activation_lstm += 1
+                else:
+                    activation_lstm += 1
 
-         layer_activation = model.activation_type[0]
-         layer_rec_activation = model.activation_type[1]
+            with open(dstpath,"r") as myfile:
+                my_lines = myfile.readlines()
+            taille_my_lines=len(my_lines)
 
-         with open(dstpath,"r") as myfile:
-             my_lines = myfile.readlines()
+            i = 0
+            while i < taille_my_lines:
+                actv_gate_x_c = my_lines[i].find('//hls_fpga insert activation  --- Gate X_C')
+                actv_gate_c = my_lines[i].find('//hls_fpga insert activation --- Gate C')
 
-         taille_my_lines=len(my_lines)
-         i = 0
+                rec_actv_gate_i = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate I')
+                rec_actv_gate_f = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate F')
+                rec_actv_gate_o = my_lines[i].find('//hls_fpga insert recurrent_activation  --- Gate O')
 
-         while i < taille_my_lines:
+                if actv_gate_x_c != -1:
+                    res = "\t\t\t\t//hls_fpga insert activation  --- Gate X_C\n\t\t\t\tnnet::"+ layer_activation +"<data_T,data_T,CONFIG_T>(x_c, cell_activation);\n"
+                elif actv_gate_c  != -1:
+                    res = "\t\t\t\t//hls_fpga insert activation --- Gate C\n\t\t\t\tnnet::"+ layer_activation +"<data_T,data_T,CONFIG_T>(c, cell_activation);\n"
+                elif rec_actv_gate_i != -1:
+                    res = "\t\t\t\t//hls_fpga insert recurrent_activation --- Gate I\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_i, i);\n"
+                elif rec_actv_gate_f != -1:
+                    res = "\t\t\t\t//hls_fpga insert recurrent_activation --- Gate F\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_f, f);\n"
+                elif rec_actv_gate_o != -1:
+                    res = "\t\t\t\t//hls_fpga insert recurrent_activation  --- Gate O\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_o, o);\n"
+                else:
+                    res = my_lines[i]
 
-            actv_gate_x_c = my_lines[i].find('//hls_fpga insert activation  --- Gate X_C')
-            actv_gate_c = my_lines[i].find('//hls_fpga insert activation --- Gate C')
+                my_lines[i] = res
+                i += 1
 
-            rec_actv_gate_i = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate I')
-            rec_actv_gate_f = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate F')
-            rec_actv_gate_o = my_lines[i].find('//hls_fpga insert recurrent_activation  --- Gate O')
-
-
-            if actv_gate_x_c != -1:
-               res = "\t//hls_fpga insert activation  --- Gate X_C\n\tnnet::"+ layer_activation +"<data_T,data_T,CONFIG_T>(x_c, cell_activation);\n"
-                       
-            elif actv_gate_c  != -1:
-               res = "\t//hls_fpga insert activation --- Gate C\n\tnnet::"+ layer_activation +"<data_T,data_T,CONFIG_T>(c, cell_activation);\n"
-
-            elif rec_actv_gate_i != -1:
-               res = "\t//hls_fpga insert recurrent_activation --- Gate I\n\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_i, i);\n"
-
-            elif rec_actv_gate_f != -1:
-               res = "\t//hls_fpga insert recurrent_activation --- Gate F\n\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_f, f);\n"
-
-            elif rec_actv_gate_o != -1:
-               res = "\t//hls_fpga insert recurrent_activation  --- Gate O\n\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_o, o);\n"
-                   
-            else:
-               res = my_lines[i]
-          
-            my_lines[i] = res
-            i += 1    
-              	 
-         with open(dstpath ,"w") as myfile:
-             myfile.writelines(my_lines)
-         return
-
-    def write_input_dimention(self, model):
-
-         if return_sequences:
-             print('Resultat',model.batch_input[0])
-         else:
-             #print ('Resultado', model.layer_list['input_shape'])
-             print('Resultat',model.batch_input[0])
-         return
+            with open(dstpath, "w") as myfile:
+                myfile.writelines(my_lines)
+        else:
+            return
 
     def write_hls(self, model):
-        print('Writing HLS project')
-        print(model)
+        #print('Writing HLS project')
+        #print(model)
         self.write_project_dir(model)
         self.write_project_cpp(model)
         self.write_project_header(model)
@@ -876,8 +864,7 @@ class QuartusWriter(Writer):
         self.write_build_script(model)
         self.write_nnet_utils(model)
         self.write_activation_lstm(model)
-        #self.write_input_dimention(model)
+
         self.write_activation_tables(model)
         self.write_tar(model)
         print('Done')
-

@@ -4,7 +4,6 @@ import os
 import sys
 import re
 import numpy as np
-import pandas as pd
 
 from collections import OrderedDict
 
@@ -689,8 +688,8 @@ class Activation(Layer):
         params['table_t'] = self.get_precision_string(self.get_attr('table_t'))
 
         return self._config_template.format(**params)
-	
-	
+
+
 
 class ParametrizedActivation(Activation):
     def function_cpp(self):
@@ -902,8 +901,8 @@ class Lstm(Layer):
         data  = self.model.get_weights_data(self.name, 'kernel')
         data2 = self.model.get_weights_data(self.name, 'recurrent_kernel')
         data3 = self.model.get_weights_data(self.name, 'bias')
-        print("data3:")
-        print(data3)
+        #print("data3:")
+        #print(data3)
         #print(self.get_layers.get_weights())
         weight_types=["i","f","c","o"]
         for i in range (0,4):

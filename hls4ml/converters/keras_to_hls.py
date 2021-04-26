@@ -20,7 +20,7 @@ class KerasFileReader(object):
     def _find_data(self, layer_name, var_name):
         def h5_visitor_func(name):
             if var_name in name:
-                return name 
+                return name
 
         if 'model_weights' in list(self.h5file.keys()): # h5 file comes from model.save()
             layer_path = 'model_weights/{}'.format(layer_name)
@@ -118,9 +118,16 @@ def parse_default_keras_layer(keras_layer, input_names):
     if 'epsilon' in keras_layer['config']:
         layer['epsilon'] = keras_layer['config']['epsilon']
 
+    if 'recurrent_activation' in keras_layer['config']:
+        layer['recurrent_activation'] = keras_layer['config']['recurrent_activation']
+
+    if 'return_sequences' in keras_layer['config']:
+        layer['return_sequences'] = keras_layer['config']['return_sequences']
+
+
     return layer
 
-activation_type = []
+
 
 def keras_to_hls(config):
 
@@ -170,12 +177,12 @@ def keras_to_hls(config):
     output_layers = None
 
     layer_config = None
-    layer_activation = []
 
-    if model_arch['class_name'] == 'Sequential': 
+
+    if model_arch['class_name'] == 'Sequential':
         print('Interpreting Sequential')
         layer_config = model_arch['config']
-        if 'layers' in layer_config: # Newer Keras versions have 'layers' in 'config' key   
+        if 'layers' in layer_config: # Newer Keras versions have 'layers' in 'config' key
             layer_config = layer_config['layers']
         if layer_config[0]['class_name'] != 'InputLayer':
             input_layer = {}
@@ -183,7 +190,6 @@ def keras_to_hls(config):
             input_layer['class_name'] = 'InputLayer'
             input_layer['input_shape'] = layer_config[0]['config']['batch_input_shape'][1:]
             layer_list.append(input_layer)
-            print('Input shape:', input_layer['input_shape'])
     elif model_arch['class_name'] in ['Model', 'Functional']:
         print('Interpreting Model')
         layer_config = model_arch['config']['layers']
@@ -191,34 +197,28 @@ def keras_to_hls(config):
         output_layers = [ out[0] for out in model_arch['config']['output_layers'] ]
 
     # Get input shape and check for unsupported layer type
-    for keras_layer in layer_config: 
+    for keras_layer in layer_config:
         if keras_layer['class_name'] not in supported_layers:
             raise Exception('ERROR: Unsupported layer type: {}'.format(keras_layer['class_name']))
 
     output_shapes = {}
     output_shape = None
 
-    print('Topology:')
+    #print('Topology:')
     for keras_layer in layer_config:
         if 'batch_input_shape' in keras_layer['config']:
-            input_shapes = [keras_layer['config']['batch_input_shape']] 
-            print('input_shapes',input_shapes, "keras_layer['config']",keras_layer['config'])
-            if 'recurrent_activation' in keras_layer['config']:
-                layer_rec_activation = keras_layer['config']['recurrent_activation']  
-                return_sequences = keras_layer['config']['return_sequences'] 
-                
-                print('return_sequences',return_sequences)
+            input_shapes = [keras_layer['config']['batch_input_shape']]
         else:
-            if 'inbound_nodes' in keras_layer:                  
+            if 'inbound_nodes' in keras_layer:
                 input_shapes = [output_shapes[inbound_node[0][0]] for inbound_node in keras_layer['inbound_nodes']]
             else:
                 # Sequential model, so output_shape from the previous layer is still valid
                 input_shapes = [output_shape]
-                print("Input_shapes_Topology",input_shapes)  
+                #print("Input_shapes_Topology",input_shapes)
 
-        keras_class = keras_layer['class_name'] 
+        keras_class = keras_layer['class_name']
 
-        if keras_class in skip_layers:     
+        if keras_class in skip_layers:
             if 'inbound_nodes' in keras_layer:
                 name = keras_layer['config']['name']
                 #Currently supported skipped layers have only one input
@@ -237,20 +237,20 @@ def keras_to_hls(config):
             layer_counter = layer_counter + 1
 
         #Extract inbound nodes
-        if 'inbound_nodes' in keras_layer and len(keras_layer['inbound_nodes']) > 0:   
+        if 'inbound_nodes' in keras_layer and len(keras_layer['inbound_nodes']) > 0:
             input_names = [ inputs_map.get(inp[0], inp[0]) for inp in keras_layer['inbound_nodes'][0] ]
         else:
             input_names = None
-        
+
         layer, output_shape = layer_handlers[keras_class](keras_layer, input_names, input_shapes, reader, config)
         layer_list.append( layer )
         if 'activation' in layer and layer['class_name'] not in ['Activation', 'LeakyReLU', 'ThresholdedReLU', 'ELU', 'PReLU', 'Softmax', 'LSTM']:# + qkeras_layers:
             act_layer = {}
-            
+
             act_layer['name'] = layer['name'] + '_' + layer['activation']
             act_layer['activation'] = layer['activation']
 
-            if 'activ_param' in layer:  
+            if 'activ_param' in layer:
                 act_layer['activ_param'] = layer['activ_param']
                 act_layer['class_name'] = layer['activation']
             elif layer['activation'] == 'softmax':
@@ -263,18 +263,13 @@ def keras_to_hls(config):
 
             layer_list.append(act_layer)
 
-            
-            layer_activation.append(layer_list[1]['activation'])
-            layer_activation.append(layer_list[2]['activation'])
-            activation_type.append(layer_list[1]['activation'])
-            activation_type.append(layer_rec_activation)
-		
+
+
 
 
         assert(output_shape is not None)
 
         output_shapes[layer['name']] = output_shape
-        print("output_shape 1", output_shapes[layer['name']], layer['name'])
 
 
     #################
@@ -282,12 +277,9 @@ def keras_to_hls(config):
     #################
     ## Read file lstm_cell.h
 
-    print('Creating HLS model')
-    print("O que é layer list?", layer_list)
-    print("O que é output_layers?", output_layers)
-    print("O que é input_layers ?", input_layers)
-    hls_model = HLSModel(config, reader, activation_type, return_sequences, layer_list, input_layers, output_layers)
-    print('HLS_MODEL: ', hls_model)
-    print('**Input_Layers**', input_layers)
-    print('**Output_Layers**', output_layers)
+    #print('Creating HLS model')
+    hls_model = HLSModel(config, reader, layer_list, input_layers, output_layers)
+    #print('HLS_MODEL: ', hls_model)
+    #print('**Input_Layers**', input_layers)
+    #print('**Output_Layers**', output_layers)
     return hls_model
