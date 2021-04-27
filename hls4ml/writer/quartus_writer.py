@@ -505,15 +505,14 @@ class QuartusWriter(Writer):
         ###################
 
         filedir = os.path.dirname(os.path.abspath(__file__))
-
-        #srcpath = os.path.join(filedir,'../templates/quartus/firmware/nnet_utils/activation_tables/')
+        # srcpath = os.path.join(filedir,'../templates/quartus/firmware/nnet_utils/activation_tables/')
         dstpath = '{}/firmware/nnet_utils/activation_tables/'.format(model.config.get_output_dir())
 
         if not os.path.exists(dstpath):
             os.mkdir(dstpath)
 
         ###################
-        ## elu_table
+        # elu_table
         ###################
         for layer in model.get_layers():
             if(layer.get_attr('activation') == 'elu'):
@@ -522,9 +521,9 @@ class QuartusWriter(Writer):
                 table_size = 1024
 
         table_name = 'elu_table'
-        h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
+        h_file = open("{}/{}.tb".format(dstpath, table_name), "w")
 
-        #meta data
+        # meta data
         h_file.write("#ifndef {}_H_\n".format(table_name.upper()))
         h_file.write("#define {}_H_\n".format(table_name.upper()))
         h_file.write("\n")
@@ -548,7 +547,7 @@ class QuartusWriter(Writer):
         h_file.close()
 
         ###################
-        ## sigmoid_table
+        # sigmoid_table
         ###################
         for layer in model.get_layers():
             if(layer.get_attr('activation') == 'sigmoid'):
@@ -557,9 +556,9 @@ class QuartusWriter(Writer):
                 table_size = 1024
 
         table_name = 'sigmoid_table'
-        h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
+        h_file = open("{}/{}.tb".format(dstpath, table_name), "w")
 
-        #meta data
+        # meta data
         h_file.write("#ifndef {}_H_\n".format(table_name.upper()))
         h_file.write("#define {}_H_\n".format(table_name.upper()))
         h_file.write("\n")
@@ -583,7 +582,7 @@ class QuartusWriter(Writer):
         h_file.close()
 
         ###################
-        ## tanh_table
+        # tanh_table
         ###################
         for layer in model.get_layers():
             if(layer.get_attr('activation') == 'dense_tanh'):
@@ -594,7 +593,7 @@ class QuartusWriter(Writer):
         table_name = 'tanh_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
 
-        #meta data
+        # meta data
         h_file.write("#ifndef {}_H_\n".format(table_name.upper()))
         h_file.write("#define {}_H_\n".format(table_name.upper()))
         h_file.write("\n")
@@ -618,7 +617,7 @@ class QuartusWriter(Writer):
         h_file.close()
 
         ###################
-        ## softplus_table
+        # softplus_table
         ###################
         for layer in model.get_layers():
             if(layer.get_attr('activation') == 'softplus'):
@@ -629,7 +628,7 @@ class QuartusWriter(Writer):
         table_name = 'softplus_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
 
-        #meta data
+        # meta data
         h_file.write("#ifndef {}_H_\n".format(table_name.upper()))
         h_file.write("#define {}_H_\n".format(table_name.upper()))
         h_file.write("\n")
@@ -653,7 +652,7 @@ class QuartusWriter(Writer):
         h_file.close()
 
         ###################
-        ## softsign_table
+        # softsign_table
         ###################
         for layer in model.get_layers():
             if(layer.get_attr('activation') == 'softsign'):
@@ -664,7 +663,7 @@ class QuartusWriter(Writer):
         table_name = 'softsign_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
 
-        #meta data
+        # meta data
         h_file.write("#ifndef {}_H_\n".format(table_name.upper()))
         h_file.write("#define {}_H_\n".format(table_name.upper()))
         h_file.write("\n")
@@ -688,7 +687,7 @@ class QuartusWriter(Writer):
         h_file.close()
 
         ###################
-        ## selu_table
+        # selu_table
         ###################
         for layer in model.get_layers():
             if(layer.get_attr('activation') == 'selu'):
@@ -699,7 +698,7 @@ class QuartusWriter(Writer):
         table_name = 'selu_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
 
-        #meta data
+        # meta data
         h_file.write("#ifndef {}_H_\n".format(table_name.upper()))
         h_file.write("#define {}_H_\n".format(table_name.upper()))
         h_file.write("\n")
@@ -723,7 +722,7 @@ class QuartusWriter(Writer):
         h_file.close()
 
         ###################
-        ## exp_table
+        # exp_table
         ###################
         for layer in model.get_layers():
             if(layer.get_attr('activation') == 'softmax'):
@@ -734,7 +733,7 @@ class QuartusWriter(Writer):
         table_name = 'exp_table'
         h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
 
-        #meta data
+        # meta data
         h_file.write("#ifndef {}_H_\n".format(table_name.upper()))
         h_file.write("#define {}_H_\n".format(table_name.upper()))
         h_file.write("\n")
@@ -758,7 +757,7 @@ class QuartusWriter(Writer):
         h_file.close()
 
         ###################
-        ## invert_table
+        # invert_table
         ###################
         for layer in model.get_layers():
             if(layer.get_attr('activation') == 'softmax'):
@@ -767,9 +766,9 @@ class QuartusWriter(Writer):
                 table_size = 1024
 
         table_name = 'invert_table'
-        h_file = open("{}/{}.tb".format(dstpath, table_name),"w")
+        h_file = open("{}/{}.tb".format(dstpath, table_name), "w")
 
-        #meta data
+        # meta data
         h_file.write("#ifndef {}_H_\n".format(table_name.upper()))
         h_file.write("#define {}_H_\n".format(table_name.upper()))
         h_file.write("\n")
@@ -794,7 +793,6 @@ class QuartusWriter(Writer):
         h_file.write("\n#endif\n")
         h_file.close()
 
-
     def write_tar(self, model):
         ###################
         # Tarball output
@@ -803,56 +801,129 @@ class QuartusWriter(Writer):
         with tarfile.open(model.config.get_output_dir() + '.tar.gz', mode='w:gz') as archive:
             archive.add(model.config.get_output_dir(), recursive=True)
 
-    def write_activation_lstm(self, model): #layer_rec_activation,layer_activation
-        if(model.inputs[0] == 'lstm_input'):
-            dstpath = './{}/firmware/nnet_utils/lstm_cell.h'.format(model.config.get_output_dir())
-            activation_lstm = 0
+    def write_activation_lstm(self, model):
+        dstpath = './{}/firmware/nnet_utils/lstm_cell.h'.format(model.config.get_output_dir())
+        activation_lstm = 0
 
-            for layer in model.get_layers():
-                if(activation_lstm == 1):
-                    layer_activation = layer.get_attr('activation')
-                    layer_rec_activation =layer.get_attr('recurrent_activation')
-                    activation_lstm += 1
-                else:
-                    activation_lstm += 1
+        for layer in model.get_layers():
+            if(activation_lstm == 1):
+                layer_activation = layer.get_attr('activation')
+                layer_rec_activation = layer.get_attr('recurrent_activation')
+                activation_lstm += 1
+            else:
+                activation_lstm += 1
 
-            with open(dstpath,"r") as myfile:
-                my_lines = myfile.readlines()
-            taille_my_lines=len(my_lines)
+        with open(dstpath, "r") as myfile:
+            my_lines = myfile.readlines()
+        taille_my_lines = len(my_lines)
 
-            i = 0
-            while i < taille_my_lines:
-                actv_gate_x_c = my_lines[i].find('//hls_fpga insert activation  --- Gate X_C')
-                actv_gate_c = my_lines[i].find('//hls_fpga insert activation --- Gate C')
+        i = 0
+        while i < taille_my_lines:
+            actv_gate_x_c = my_lines[i].find('//hls_fpga insert activation  --- Gate X_C')
+            actv_gate_c = my_lines[i].find('//hls_fpga insert activation --- Gate C')
 
-                rec_actv_gate_i = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate I')
-                rec_actv_gate_f = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate F')
-                rec_actv_gate_o = my_lines[i].find('//hls_fpga insert recurrent_activation  --- Gate O')
+            rec_actv_gate_i = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate I')
+            rec_actv_gate_f = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate F')
+            rec_actv_gate_o = my_lines[i].find('//hls_fpga insert recurrent_activation  --- Gate O')
 
-                if actv_gate_x_c != -1:
-                    res = "\t\t\t\t//hls_fpga insert activation  --- Gate X_C\n\t\t\t\tnnet::"+ layer_activation +"<data_T,data_T,CONFIG_T>(x_c, cell_activation);\n"
-                elif actv_gate_c  != -1:
-                    res = "\t\t\t\t//hls_fpga insert activation --- Gate C\n\t\t\t\tnnet::"+ layer_activation +"<data_T,data_T,CONFIG_T>(c, cell_activation);\n"
-                elif rec_actv_gate_i != -1:
-                    res = "\t\t\t\t//hls_fpga insert recurrent_activation --- Gate I\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_i, i);\n"
-                elif rec_actv_gate_f != -1:
-                    res = "\t\t\t\t//hls_fpga insert recurrent_activation --- Gate F\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_f, f);\n"
-                elif rec_actv_gate_o != -1:
-                    res = "\t\t\t\t//hls_fpga insert recurrent_activation  --- Gate O\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_o, o);\n"
-                else:
-                    res = my_lines[i]
+            if actv_gate_x_c != -1:
+                res = "\t\t\t\t//hls_fpga insert activation  --- Gate X_C\n\t\t\t\tnnet::" + \
+                 layer_activation + "<data_T,data_T,CONFIG_T>(x_c, cell_activation);\n"
+            elif actv_gate_c != -1:
+                res = "\t\t\t\t//hls_fpga insert activation --- Gate C\n\t\t\t\tnnet::" + \
+                 layer_activation + "<data_T,data_T,CONFIG_T>(c, cell_activation);\n"
+            elif rec_actv_gate_i != -1:
+                res = "\t\t\t\t//hls_fpga insert recurrent_activation --- Gate I\n\t\t\t\tnnet::" + \
+                 layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_i, i);\n"
+            elif rec_actv_gate_f != -1:
+                res = "\t\t\t\t//hls_fpga insert recurrent_activation --- Gate F\n\t\t\t\tnnet::" + \
+                 layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_f, f);\n"
+            elif rec_actv_gate_o != -1:
+                res = "\t\t\t\t//hls_fpga insert recurrent_activation  --- Gate O\n\t\t\t\tnnet::" + \
+                 layer_rec_activation + "<data_T,data_T,CONFIG_T>(x_o, o);\n"
+            else:
+                res = my_lines[i]
 
-                my_lines[i] = res
-                i += 1
+            my_lines[i] = res
+            i += 1
 
-            with open(dstpath, "w") as myfile:
-                myfile.writelines(my_lines)
+        with open(dstpath, "w") as myfile:
+            myfile.writelines(my_lines)
+
+    def write_output_dimention(self, model):
+        dstpath = './{}/firmware/nnet_utils/lstm_cell.h'.format(model.config.get_output_dir())
+        layer_return_sequences = 0
+
+        with open(dstpath, "r") as myfile:
+            my_lines = myfile.read()
+
+        for layer in model.get_layers():
+            if(layer_return_sequences == 1):
+                return_sequences = layer.get_attr('return_sequences')
+                print( return_sequences, "begin")
+                layer_return_sequences += 1
+            else:
+                layer_return_sequences += 1
+        print(return_sequences, "end")
+        if not return_sequences:
+
+            res_return_sequences_false = """
+                for (int x = 0; x < CONFIG_T::n_in; x++) {
+                    res[x]= hidden_state[x][CONFIG_T::n_timestamp];
+                }
+            """
+            my_lines = my_lines.replace('//output - verification', res_return_sequences_false)
+
         else:
-            return
+            res_return_sequences_true = """
+                for (int x = 0; x < CONFIG_T::n_in; x++) {
+                    for(int h = 0; h < CONFIG_T::n_timestamp; h++){
+                      res[x][h]= hidden_state[x][h];
+                    }
+                }
+            """
+            my_lines = my_lines.replace("res[CONFIG_T::n_out]", "res[CONFIG_T::n_out][CONFIG_T::n_timestamp]")
+            my_lines = my_lines.replace('//output - verification', res_return_sequences_true)
+
+        with open(dstpath, "w") as myfile:
+            myfile.writelines(my_lines)
+
+    def write_input_dimention(self, model):
+        dstpath = './{}/firmware/nnet_utils/lstm_cell.h'.format(model.config.get_output_dir())
+        with open(dstpath, "r") as myfile:
+            my_lines = myfile.read()
+
+        if model.sliding_window:
+
+            input_sliding_window = """
+                      for (int j=CONFIG_T::n_timestamp-1;j>0; j--){
+                        inputs[j] = inputs[j-1];
+                      }
+                      inputs[0]=input0;
+             """
+
+        else:
+            input_type = "void lstm_network(data_T *"
+            my_lines = my_lines.replace('void lstm_network(data_T ', input_type)
+            input_sliding_window = """
+                      for (int j=0; j<CONFIG_T::n_timestamp; j++){
+                      inputs[j] = input0[j];
+                    }
+             """
+
+        my_lines = my_lines.replace('//input0 - verification', input_sliding_window)
+        with open(dstpath, "w") as myfile:
+            myfile.writelines(my_lines)
+
+    def write_lstm(self, model):
+        if(model.inputs[0] == 'lstm_input'):
+            self.write_activation_lstm(model)
+            self.write_input_dimention(model)
+            self.write_output_dimention(model)
 
     def write_hls(self, model):
-        #print('Writing HLS project')
-        #print(model)
+        # print('Writing HLS project')
+        # print(model)
         self.write_project_dir(model)
         self.write_project_cpp(model)
         self.write_project_header(model)
@@ -863,8 +934,7 @@ class QuartusWriter(Writer):
         self.write_bridge(model)
         self.write_build_script(model)
         self.write_nnet_utils(model)
-        self.write_activation_lstm(model)
-
+        self.write_lstm(model)
         self.write_activation_tables(model)
         self.write_tar(model)
         print('Done')

@@ -21,7 +21,6 @@ class HLSConfig(object):
 
         self.backend = get_backend(self.config.get('Backend', 'Vivado'))
         self.writer = get_writer(self.config.get('Backend', 'Vivado'))
-
         self.model_precision = {}
         self.layer_type_precision = {}
         self.layer_name_precision = {}
@@ -40,6 +39,10 @@ class HLSConfig(object):
 
         self.trace_output = self.get_config_value('TraceOutput', False)
 
+        #self.xx=self.get_layer_config_value(Lstm,'Sliding_window')
+        #print("self.sliding_windowxxxxx", self.xx)
+        self.sliding_window = self.config['HLSConfig'].get('LayerType', {}).get('Lstm', None).get('Sliding_window',None)
+        print("self.sliding_window", self.sliding_window)
         self._parse_hls_config()
         self._validate_hls_config()
 
@@ -243,6 +246,9 @@ class HLSConfig(object):
 class HLSModel(object):
     def __init__(self, config, data_reader, layer_list, inputs=None, outputs=None):
         self.config = HLSConfig(config)
+        self.sliding_window = self.config.sliding_window
+        print("self.sliding_window ", self.sliding_window)
+        #print('CONFIG sliding window', config.get('LSTM')
         self.backend = get_backend(config.get('Backend', 'Vivado'))
         self.reader = data_reader
         # If not provided, assumes layer_list[0] is input, and layer_list[-1] is output
@@ -254,9 +260,7 @@ class HLSModel(object):
         self.output_vars = {}
 
         self._top_function_lib = None
-
         self._make_graph(layer_list)
-
         self._optimize_model(self.config.optimizers)
         self.batch_input = layer_list[1]['input_shape']
 

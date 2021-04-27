@@ -187,7 +187,7 @@ lstm_config_template = """struct config{index} : lstm_config {{
     static const unsigned n_out = {n_in};
     static const unsigned n_timestamp = {n_timestamp};
 }};\n"""
-lstm_function_template = 'lstm_network<{input_t}, {output_t}, {config} ,{input_t}>({input}[0], {output},{weights});'
+lstm_function_template = 'lstm_network<{input_t}, {output_t}, {config} ,{input_t}>({input}, {output}, {weights});'
 lstm_include_list = ['nnet_utils/lstm_cell.h']
 
 dense_function_template = 'nnet::dense{strategy}<{input_t}, {output_t}, {config}>({input}, {output}, {w}, {b});'

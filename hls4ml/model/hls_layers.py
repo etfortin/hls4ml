@@ -70,6 +70,9 @@ class ArrayVariable(Variable):
         self.dim_names = dim_names
         self.pragma = pragma
 
+    def __str__(self):
+        return 'ArrayVariable of type: {type}, name: {name} shape: {shape}'.format(type=self.type.name, name=self.cppname, shape=self.shape)
+
     def get_shape(self):
         return zip(self.dim_names, self.shape)
 
@@ -913,6 +916,8 @@ class Lstm(Layer):
 
     def function_cpp(self):
         params = self._default_function_params()
+        if self.model.sliding_window:
+            params['input'] = params['input'] + '[0]'
         params['weights']=""
         for i in ["kernel","recurrent_kernel","bias"]:
           for j in ["i","f","c","o"]:
