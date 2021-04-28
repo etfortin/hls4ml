@@ -67,7 +67,10 @@ class QuartusWriter(Writer):
     def write_project_dir(self, model):
 
         if not os.path.isdir("{}/firmware/weights".format(model.config.get_output_dir())):
-            os.makedirs("{}/firmware/weights".format(model.config.get_output_dir()))
+            os.makedirs("{}/firmware/weights".format(model.config.get_output_dir(                      for (int j=1;j<CONFIG_T::n_timestamp; j++){
+                        inputs[j-1] = inputs[j];
+                      }
+                      inputs[CONFIG_T::n_timestamp-1]=input0;)))
 
     def write_project_cpp(self, model):
         ###################
@@ -896,10 +899,10 @@ class QuartusWriter(Writer):
         if model.sliding_window:
 
             input_sliding_window = """
-                      for (int j=CONFIG_T::n_timestamp-1;j>0; j--){
-                        inputs[j] = inputs[j-1];
+                      for (int j=1;j<CONFIG_T::n_timestamp; j++){
+                        inputs[j-1] = inputs[j];
                       }
-                      inputs[0]=input0;
+                      inputs[CONFIG_T::n_timestamp-1]=input0;
              """
 
         else:

@@ -31,14 +31,14 @@ struct activ_config
     static const unsigned n_in = 10;
 
     // Internal info
-    static const unsigned table_size = 512;
+    static const unsigned table_size = 1024;
 
     // Resource reuse info
     static const unsigned io_type = io_parallel;
     static const unsigned reuse_factor = 1;
 
     // Internal data type definitions
-    typedef ac_fixed<16,8> table_t;
+    typedef ac_fixed<16,6> table_t;
 };
 
 // *************************************************
