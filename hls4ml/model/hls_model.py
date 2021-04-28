@@ -248,17 +248,12 @@ class HLSModel(object):
         # If not provided, assumes layer_list[0] is input, and layer_list[-1] is output
         self.inputs = inputs if inputs is not None else [layer_list[0]['name']]
         self.outputs = outputs if outputs is not None else [layer_list[-1]['name']]
-
         self.index = 0
         self.graph = OrderedDict()
         self.output_vars = {}
-
         self._top_function_lib = None
-
         self._make_graph(layer_list)
-
         self._optimize_model(self.config.optimizers)
-        self.batch_input = layer_list[1]['input_shape']
 
 
     def _make_graph(self, layer_list):
