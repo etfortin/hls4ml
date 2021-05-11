@@ -262,8 +262,9 @@ class HLSModel(object):
 
     def _sliding_window(self, layer_list):
         for layer in layer_list:
-            name = layer['name']
-            if name == 'lstm':
+            name = layer['class_name']
+            print(name, "name")
+            if name == 'LSTM':
                 self.sliding_window = self.config.sliding_window
                 self.sliding_window_2 = layer['Sliding_window']
                 print("self.sliding_window ", self.sliding_window)
