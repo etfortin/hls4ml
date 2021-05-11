@@ -1,5 +1,6 @@
-KerasJson: ./models/multi_layer.json
-KerasH5:   ./models/multi_layer.h5
+
+KerasJson: ./models/KERAS_LSTM_1.json
+KerasH5:   ./models/KERAS_LSTM_weights_1.h5
 OutputDir: quartus_prj/KERAS_LSTM-CPPM
 ProjectName: myproject
 FPGAPart: 1SG280HU2F50E2VG
