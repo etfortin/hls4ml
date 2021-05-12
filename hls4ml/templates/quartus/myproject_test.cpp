@@ -29,15 +29,17 @@
 #include "firmware/parameters.h"
 #include "firmware/myproject.h"
 
-#define CHECKPOINT 5000
+
+#define CHECKPOINT 1
+
 
 int main(int argc, char **argv)
 {
   //load input data from text file
-  std::ifstream fcount("tb_data/tb_input_features.dat");
-  std::ifstream fin("tb_data/tb_input_features.dat");
+  std::ifstream fcount("/atlas/chiedde/Documents/CPPM_Nemer/cppm-nnlar/hls4ml/quartus-test-cppm/tb_data/data_new.txt");
+  std::ifstream fin("/atlas/chiedde/Documents/CPPM_Nemer/cppm-nnlar/hls4ml/quartus-test-cppm/tb_data/data_new.txt");
   //load predictions from text file
-  std::ifstream fpr("tb_data/tb_output_predictions.dat");
+  std::ifstream fpr("/atlas/chiedde/Documents/CPPM_Nemer/cppm-nnlar/hls4ml/quartus-test-cppm/tb_data/true_lauri.txt");
   std::cout << "Openning files for simulations" << std::endl;
 
   std::string RESULTS_LOG = "tb_data/results.log";
@@ -46,13 +48,13 @@ int main(int argc, char **argv)
   std::string iline;
   std::string pline;
   int e = 0;
-
-  int num_iterations = std::count(std::istreambuf_iterator<char>(fcount),
-                   std::istreambuf_iterator<char>(), '\n');
+  int num_iterations = 10;
+  //int num_iterations = std::count(std::istreambuf_iterator<char>(fcount),
+  //                 std::istreambuf_iterator<char>(), '\n');
   if (fin.is_open() && fpr.is_open()) {
     //hls-fpga-machine-learning insert component-io
     std::vector<std::vector<float>> pr(num_iterations,std::vector<float>());
-    while ( std::getline(fin,iline) && std::getline (fpr,pline) ) {
+    while ( std::getline(fin,iline) && std::getline (fpr,pline) && e< num_iterations) {
       if (e % CHECKPOINT == 0) std::cout << "Processing input " << e << std::endl;
       char* cstr=const_cast<char*>(iline.c_str());
       char* current;
@@ -72,8 +74,10 @@ int main(int argc, char **argv)
 
       //hls-fpga-machine-learning insert data
 
-      e++;
       //hls-fpga-machine-learning insert top-level-function
+      e++;
+    }
+    //hls-fpga-machine-learning insert run-all-function
     for(int j = 0; j < e; j++) {
       //hls-fpga-machine-learning insert tb-output
       if (j % CHECKPOINT == 0) {
@@ -85,6 +89,8 @@ int main(int argc, char **argv)
     }
     fin.close();
     fpr.close();
+    delete[] lstm_input;
+    delete[] layer4_out;
   } else {
     num_iterations = 10;
     std::cout << "INFO: Unable to open input/predictions file, using default input with " << num_iterations << " invocations." << std::endl;

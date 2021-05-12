@@ -250,11 +250,9 @@ class HLSModel(object):
         # If not provided, assumes layer_list[0] is input, and layer_list[-1] is output
         self.inputs = inputs if inputs is not None else [layer_list[0]['name']]
         self.outputs = outputs if outputs is not None else [layer_list[-1]['name']]
-
         self.index = 0
         self.graph = OrderedDict()
         self.output_vars = {}
-
         self._top_function_lib = None
         self._make_graph(layer_list)
         self._optimize_model(self.config.optimizers)
@@ -262,12 +260,12 @@ class HLSModel(object):
 
     def _sliding_window(self, layer_list):
         for layer in layer_list:
-            name = layer['name']
-            if name == 'lstm':
+            name = layer['class_name']
+            if name == 'LSTM':
                 self.sliding_window = self.config.sliding_window
-                self.sliding_window_2 = layer['Sliding_window']
+                #self.sliding_window_2 = layer['Sliding_window']
                 print("self.sliding_window ", self.sliding_window)
-                print("self.sliding_window_2 ", self.sliding_window_2)
+                #print("self.sliding_window_2 ", self.sliding_window_2)
 
     def _make_graph(self, layer_list):
         for layer in layer_list:

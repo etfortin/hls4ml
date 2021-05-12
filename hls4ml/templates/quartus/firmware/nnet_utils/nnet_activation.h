@@ -99,12 +99,13 @@ void  relu1(data_T data[CONFIG_T::n_in], res_T res[CONFIG_T::n_in])
 template<class data_T, class res_T, typename CONFIG_T>
 void  sigmoid(data_T data[CONFIG_T::n_in], res_T res[CONFIG_T::n_in])
 {
+    int MAX_TABLE_value=8;
     #include "activation_tables/sigmoid_table.tb"
     // Index into the lookup table based on data
     #pragma unroll
     for (int ii=0; ii<CONFIG_T::n_in; ii++) {
         int data_round = (data[ii]*(CONFIG_T::table_size/16)).to_int();
-        int index = data_round + 8*CONFIG_T::table_size/16;
+        int index = data_round + MAX_TABLE_value *CONFIG_T::table_size/16;
         if (index < 0)   index = 0;
         if (index > CONFIG_T::table_size-1) index = CONFIG_T::table_size-1;
         res[ii] = (res_T) sigmoid_table[index];
