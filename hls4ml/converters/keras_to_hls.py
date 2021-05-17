@@ -121,9 +121,6 @@ def parse_default_keras_layer(keras_layer, input_names):
     if 'recurrent_activation' in keras_layer['config']:
         layer['recurrent_activation'] = keras_layer['config']['recurrent_activation']
 
-    if 'return_sequences' in keras_layer['config']:
-        layer['return_sequences'] = keras_layer['config']['return_sequences']
-
 
     return layer
 
