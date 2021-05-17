@@ -89,8 +89,9 @@ int main(int argc, char **argv)
     }
     fin.close();
     fpr.close();
-    delete[] lstm_input;
-    delete[] layer4_out;
+    //hls-fpga-machine-learning insert delete
+
+
   } else {
     num_iterations = 10;
     std::cout << "INFO: Unable to open input/predictions file, using default input with " << num_iterations << " invocations." << std::endl;

@@ -73,7 +73,7 @@ class QuartusWriter(Writer):
         ###################
         ## myproject.cpp
         ###################
-
+        layer_return_sequences = 0
         filedir = os.path.dirname(os.path.abspath(__file__))
         f = open(os.path.join(filedir,'../templates/quartus/firmware/myproject.cpp'),'r')
         fout = open('{}/firmware/{}.cpp'.format(model.config.get_output_dir(), model.config.get_project_name()),'w')
@@ -115,40 +115,85 @@ class QuartusWriter(Writer):
                         newline += '#include "weights/{}_test.h"\n'.format(w.name)
 
             elif '//hls-fpga-machine-learning insert layers' in line:
-                newline = line + '\n'
-                inputs = model.get_input_variables()
-                outputs = model.get_output_variables()
                 for layer in model.get_layers():
-                    vars = layer.get_variables()
-                    for var in vars:
-                        if var not in inputs and var not in outputs:
-                            def_cpp = var.definition_cpp()
-                            if def_cpp is not None:
-                                newline += '    ' + def_cpp + ' hls_register;\n'
-                        if var in inputs:
-                            var.name += '.data'
-                        if var in outputs:
-                            name = var.definition_cpp_name()
-                            newline += '    ' + 'hls_register outputdat ' + name + ';\n'
-                            var.name += '.data'
+                    if(layer_return_sequences == 1):
+                        return_sequences = layer.get_attr('return_sequences')
+                        print("return_sequences", return_sequences)
+                        layer_return_sequences += 1
+                    else:
+                        layer_return_sequences += 1
+                if not return_sequences:
+                    newline = line + '\n'
+                    inputs = model.get_input_variables()
+                    outputs = model.get_output_variables()
+                    for layer in model.get_layers():
+                        vars = layer.get_variables()
+                        for var in vars:
+                            if var not in inputs and var not in outputs:
+                                def_cpp = var.definition_cpp()
+                                if def_cpp is not None:
+                                    newline += '    ' + def_cpp + ' hls_register;\n'
+                            if var in inputs:
+                                var.name += '.data'
+                            if var in outputs:
+                                name = var.definition_cpp_name()
+                                newline += '    ' + 'hls_register outputdat ' + name + ';\n'
+                                var.name += '.data'
 
-                    if layer.get_attr('activation') == 'tanh':
-                        layer.set_attr('activation', 'dense_tanh')
-                    if layer.get_attr('recurrent_activation') == 'tanh':
-                        layer.set_attr('recurrent_activation', 'dense_tanh')
+                        if layer.get_attr('activation') == 'tanh':
+                            layer.set_attr('activation', 'dense_tanh')
+                        if layer.get_attr('recurrent_activation') == 'tanh':
+                            layer.set_attr('recurrent_activation', 'dense_tanh')
 
-                    func = layer.function_cpp()
-                    if func:
-                        for line in func:
-                            newline += '    ' + line + '\n'
-                        newline += '\n'
+                        func = layer.function_cpp()
+                        if func:
+                            for line in func:
+                                newline += '    ' + line + '\n'
+                            newline += '\n'
 
-                for inp in model.get_input_variables():
-                    inp.name = inp.name.replace('.data','')
-                for out in model.get_output_variables():
-                    out.name = out.name.replace('.data','')
-                    name = out.definition_cpp_name()
-                    newline += indent + 'return ' + name + ';\n'
+                    for inp in model.get_input_variables():
+                        inp.name = inp.name.replace('.data','')
+                    for out in model.get_output_variables():
+                        out.name = out.name.replace('.data','')
+                        name = out.definition_cpp_name()
+                        newline += indent + 'return ' + name + ';\n'
+                else:
+                    newline = line + '\n'
+                    inputs = model.get_input_variables()
+                    outputs = model.get_output_variables()
+                    for layer in model.get_layers():
+                        vars = layer.get_variables()
+                        for var in vars:
+                            if var not in inputs and var not in outputs:
+                                def_cpp = var.definition_cpp()
+                                if def_cpp is not None:
+                                    print(def_cpp,"layer2_t layer2_out[N_INPUT_1_1][OUT_HEIGHT_2] hls_register;")
+                                    newline += '    ' + def_cpp + ' hls_register;\n'
+                            if var in inputs:
+                                var.name += '.data'
+                            if var in outputs:
+                                name = var.definition_cpp_name()
+                                newline += '    ' + 'hls_register outputdat ' + name + ';\n'
+                                var.name += '.data'
+
+                        if layer.get_attr('activation') == 'tanh':
+                            layer.set_attr('activation', 'dense_tanh')
+                        if layer.get_attr('recurrent_activation') == 'tanh':
+                            layer.set_attr('recurrent_activation', 'dense_tanh')
+
+                        func = layer.function_cpp()
+                        if func:
+                            for line in func:
+                                newline += '    ' + line + '\n'
+                            newline += '\n'
+
+                    for inp in model.get_input_variables():
+                        inp.name = inp.name.replace('.data','')
+                    for out in model.get_output_variables():
+                        out.name = out.name.replace('.data','')
+                        name = out.definition_cpp_name()
+                        newline += indent + 'return ' + name + ';\n'
+
             #Just copy line
             else:
                 newline = line
@@ -300,9 +345,10 @@ class QuartusWriter(Writer):
                 newline = line.replace('myproject', model.config.get_project_name())
             elif '//hls-fpga-machine-learning insert data' in line:
                 newline = line
-                newline += indent+'for (int i=0 ; i < N_INPUT_1_1*N_INPUT_2_1; i++){\n'
-                newline += indent+'  lstm_input[e].data[i]=in[i];\n'
-                newline += indent+'}\n'
+                for inp in model.get_input_variables():
+                    newline += indent+'for (int i=0 ; i < N_INPUT_1_1*N_INPUT_2_1; i++){\n'
+                    newline += indent+ inp.definition_cpp_name() + '[e].data[i]=in[i];\n'
+                    newline += indent+'}\n'
 
                 #newline += '      std::vector<float>::const_iterator in_begin = in.cbegin();\n'
                 #newline += '      std::vector<float>::const_iterator in_end;\n'
@@ -367,6 +413,11 @@ class QuartusWriter(Writer):
                     newline += indent + '  std::cout << {}[j].data[i].to_double() *16 << " ";\n'.format(out.cppname)
                     newline += indent + '}\n'
                     newline += indent + 'std::cout << std::endl;\n'
+            elif '//hls-fpga-machine-learning insert delete' in line:
+                for inp in model.get_input_variables():
+                    newline += indent + 'delete[] ' + inp.definition_cpp_name() + ';\n'
+                for out in model.get_output_variables():
+                    newline += indent + 'delete[] {};\n'.format(out.cppname)
             else:
                 newline = line
             fout.write(newline)
@@ -892,13 +943,14 @@ class QuartusWriter(Writer):
 
         else:
             res_return_sequences_true = """
+
                 for (int x = 0; x < CONFIG_T::n_in; x++) {
                     for(int h = 0; h < CONFIG_T::n_timestamp; h++){
-                      res[x][h]= hidden_state[x][h];
+                      res[h][x]= hidden_state[x][h];
                     }
                 }
             """
-            my_lines = my_lines.replace("res[CONFIG_T::n_out]", "res[CONFIG_T::n_out][CONFIG_T::n_timestamp]")
+            my_lines = my_lines.replace("res[CONFIG_T::n_out]", "res[CONFIG_T::n_timestamp][CONFIG_T::n_out]")
             my_lines = my_lines.replace('//output - verification', res_return_sequences_true)
 
         with open(dstpath, "w") as myfile:
