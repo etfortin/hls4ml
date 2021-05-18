@@ -78,7 +78,12 @@ class ArrayVariable(Variable):
 
     def definition_cpp(self):
         array_shape = self.size_cpp()
-        return '{type} {name}[{shape}]'.format(type=self.type.name, name=self.cppname, shape=array_shape)
+        return_sequences = True #self.get_attr('return_sequences')
+        print(return_sequences)
+        if not return_sequences:
+            return '{type} {name}[{shape}]'.format(type=self.type.name, name=self.cppname, shape=array_shape)
+        else:
+            return '{type} {name}[N_INPUT_1_1][{shape}]'.format(type=self.type.name, name=self.cppname, shape=array_shape)
 
     def definition_cpp_name(self):
         return '{name}'.format(name=self.name)

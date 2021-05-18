@@ -82,7 +82,7 @@ class QuartusWriter(Writer):
         model_outputs = model.get_output_variables()
 
         indent = '    '
-
+        lines =[]
         for line in f.readlines():
             #Add headers to weights and biases
             if 'myproject' in line:
@@ -164,17 +164,20 @@ class QuartusWriter(Writer):
                     for layer in model.get_layers():
                         vars = layer.get_variables()
                         for var in vars:
+                            print(layer.function_cpp(), "layer master")
                             if var not in inputs and var not in outputs:
                                 def_cpp = var.definition_cpp()
+                                print("VAR nmer",var)
                                 if def_cpp is not None:
-                                    print(def_cpp,"layer2_t layer2_out[N_INPUT_1_1][OUT_HEIGHT_2] hls_register;")
+                                    print(def_cpp,"nemerrrrrr")
                                     newline += '    ' + def_cpp + ' hls_register;\n'
                             if var in inputs:
                                 var.name += '.data'
                             if var in outputs:
                                 name = var.definition_cpp_name()
-                                newline += '    ' + 'hls_register outputdat ' + name + ';\n'
+                                newline += '    ' + 'hls_register outputdat ' + name + '[N_INPUT_1_1];\n'
                                 var.name += '.data'
+                                print(var.name, "var. n_elemerrr")
 
                         if layer.get_attr('activation') == 'tanh':
                             layer.set_attr('activation', 'dense_tanh')
@@ -182,9 +185,19 @@ class QuartusWriter(Writer):
                             layer.set_attr('recurrent_activation', 'dense_tanh')
 
                         func = layer.function_cpp()
+                        print(func, 'function name nemer')
                         if func:
                             for line in func:
-                                newline += '    ' + line + '\n'
+                                if(line.find('nnet::dense') == 0 or line.find('nnet::relu') == 0):
+                                    print(line.find('nnet::dense'),"line")
+                                    input_type ='_out[i]'
+                                    line = line.replace('_out', input_type)
+                                    print(line, 'line, nemer')
+                                    nnet = '    ' + line + '\n'
+                                    lines.append(nnet)
+                                    print(nnet, lines, "olhar aqui!!!")
+                                else:
+                                    newline += '    ' + line + '\n'
                             newline += '\n'
 
                     for inp in model.get_input_variables():
@@ -192,7 +205,11 @@ class QuartusWriter(Writer):
                     for out in model.get_output_variables():
                         out.name = out.name.replace('.data','')
                         name = out.definition_cpp_name()
-                        newline += indent + 'return ' + name + ';\n'
+                        newline += '    for(int i=0; i<N_INPUT_1_1; i++){\n'
+                        for j in lines:
+                            newline += indent + j + '\n'
+                        newline += '}\n'
+                        newline += indent + 'return ' + name + '[0];\n'
 
             #Just copy line
             else:
