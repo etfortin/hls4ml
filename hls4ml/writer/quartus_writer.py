@@ -164,20 +164,22 @@ class QuartusWriter(Writer):
                     for layer in model.get_layers():
                         vars = layer.get_variables()
                         for var in vars:
-                            print(layer.function_cpp(), "layer master")
                             if var not in inputs and var not in outputs:
                                 def_cpp = var.definition_cpp()
-                                print("VAR nmer",var)
                                 if def_cpp is not None:
-                                    print(def_cpp,"nemerrrrrr")
-                                    newline += '    ' + def_cpp + ' hls_register;\n'
+
+                                    if(def_cpp.find('_out') is not -1):
+                                        input_type ='_out[N_INPUT_1_1]'
+                                        def_cpp_return = def_cpp.replace('_out', input_type)
+                                        newline += '    ' + def_cpp_return + ' hls_register;\n'
+                                    else:
+                                        newline += '    ' + def_cpp + ' hls_register;\n'
                             if var in inputs:
                                 var.name += '.data'
                             if var in outputs:
                                 name = var.definition_cpp_name()
                                 newline += '    ' + 'hls_register outputdat ' + name + '[N_INPUT_1_1];\n'
                                 var.name += '.data'
-                                print(var.name, "var. n_elemerrr")
 
                         if layer.get_attr('activation') == 'tanh':
                             layer.set_attr('activation', 'dense_tanh')
@@ -185,17 +187,13 @@ class QuartusWriter(Writer):
                             layer.set_attr('recurrent_activation', 'dense_tanh')
 
                         func = layer.function_cpp()
-                        print(func, 'function name nemer')
                         if func:
                             for line in func:
-                                if(line.find('nnet::dense') == 0 or line.find('nnet::relu') == 0):
-                                    print(line.find('nnet::dense'),"line")
+                                if(line.find('nnet::dense') is not -1 or line.find('nnet::relu') is not -1):
                                     input_type ='_out[i]'
                                     line = line.replace('_out', input_type)
-                                    print(line, 'line, nemer')
                                     nnet = '    ' + line + '\n'
                                     lines.append(nnet)
-                                    print(nnet, lines, "olhar aqui!!!")
                                 else:
                                     newline += '    ' + line + '\n'
                             newline += '\n'
