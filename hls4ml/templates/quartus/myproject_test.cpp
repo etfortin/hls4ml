@@ -30,16 +30,16 @@
 #include "firmware/myproject.h"
 
 
-#define CHECKPOINT 5000
+#define CHECKPOINT 1
 
 
 int main(int argc, char **argv)
 {
   //load input data from text file
-  std::ifstream fcount("tb_data/tb_input_features.dat");
-  std::ifstream fin("tb_data/tb_input_features.dat");
+  std::ifstream fcount("/atlas/chiedde/Documents/CPPM_Nemer/cppm-nnlar/hls4ml/quartus-test-cppm/tb_data/data_new.txt");
+  std::ifstream fin("/atlas/chiedde/Documents/CPPM_Nemer/cppm-nnlar/hls4ml/quartus-test-cppm/tb_data/data_new.txt");
   //load predictions from text file
-  std::ifstream fpr("tb_data/tb_output_predictions.dat");
+  std::ifstream fpr("/atlas/chiedde/Documents/CPPM_Nemer/cppm-nnlar/hls4ml/quartus-test-cppm/tb_data/true_lauri.txt");
   std::cout << "Openning files for simulations" << std::endl;
 
   std::string RESULTS_LOG = "tb_data/results.log";
@@ -48,9 +48,9 @@ int main(int argc, char **argv)
   std::string iline;
   std::string pline;
   int e = 0;
-
-  int num_iterations = std::count(std::istreambuf_iterator<char>(fcount),
-                   std::istreambuf_iterator<char>(), '\n');
+  int num_iterations = 10;
+  //int num_iterations = std::count(std::istreambuf_iterator<char>(fcount),
+  //                 std::istreambuf_iterator<char>(), '\n');
   if (fin.is_open() && fpr.is_open()) {
     //hls-fpga-machine-learning insert component-io
     std::vector<std::vector<float>> pr(num_iterations,std::vector<float>());

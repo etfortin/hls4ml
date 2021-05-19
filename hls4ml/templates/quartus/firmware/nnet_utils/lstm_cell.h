@@ -67,7 +67,7 @@ void add_bias(data_T *inputs,res_T *out,const WEIGHT_T *bias) {
 
 }
 template<class data_T, class res_T, typename CONFIG_T>
-void multiply_vectors(data_T *in1, data_T *in2, res_T out[]) {
+void multiply_vectors(data_T *in1, data_T *in2, res_T *out) {
     MULTIPLY_VECT_LOOP:
     #pragma unroll
     for (int i = 0; i < CONFIG_T::n_in; i++) {
@@ -120,10 +120,7 @@ void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
 
   #pragma unroll
   #pragma ivdep
-  for (int j=CONFIG_T::n_timestamp-1;j>0; j--){
-    inputs[j] = inputs[j-1];
-  }
-   inputs[0]=input0;
+  //input0 - verification
 
   #pragma unroll TIMESTAMP_UNROLLING
   for (int i=0; i < CONFIG_T::n_timestamp; i++){
@@ -132,7 +129,7 @@ void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
       hidden_state_temp[x] = hidden_state[x][i];
       cell_state_temp[x]   = cell_state[x][i];
     }
-    lstm_cell<data_T,CONFIG_T,WEIGHT_T>(hidden_state_temp,h,cell_state_temp,c,inputs[CONFIG_T::n_timestamp -1 -i ],WI,WF,WC,WO,RWI,RWF,RWC,RWO,BI,BF,BC,BO);
+    lstm_cell<data_T,CONFIG_T,WEIGHT_T>(hidden_state_temp,h,cell_state_temp,c,inputs[i],WI,WF,WC,WO,RWI,RWF,RWC,RWO,BI,BF,BC,BO);
     #pragma unroll
     for (int x = 0; x < CONFIG_T::n_in; x++) {
       hidden_state[x][i+1]=h[x];
@@ -140,10 +137,7 @@ void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
     }
   }
   #pragma unroll
-  for (int x = 0; x < CONFIG_T::n_in; x++) {
-    res[x]= hidden_state[x][CONFIG_T::n_timestamp];
-  }
-
+  //output - verification
 }
 
 template<class data_T, typename CONFIG_T, typename WEIGHT_T>
@@ -248,8 +242,8 @@ void lstm_cell(
         multiply_vectors<data_T,data_T,CONFIG_T>(gate_f, cell_state, cell_act_multp);
         add_vectors<data_T,data_T,CONFIG_T>(gate_ic, cell_act_multp,cell_act_add);
 
-        //-----------Forgot gate Calculation
-        //hls_fpga insert activation  --- Forget Gate'
+        //-----------Forget gate Calculation
+        //hls_fpga insert activation  --- Forget Gate
 
         multiply_vectors<data_T,data_T,CONFIG_T>(gate_o, gate_forget ,  h);
 
