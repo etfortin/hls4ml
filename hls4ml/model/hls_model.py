@@ -245,32 +245,29 @@ class HLSModel(object):
         self.config = HLSConfig(config)
         self.backend = get_backend(config.get('Backend', 'Vivado'))
         self.reader = data_reader
-
         # If not provided, assumes layer_list[0] is input, and layer_list[-1] is output
         self.inputs = inputs if inputs is not None else [layer_list[0]['name']]
         self.outputs = outputs if outputs is not None else [layer_list[-1]['name']]
-
         self.index = 0
         self.graph = OrderedDict()
         self.output_vars = {}
-
         self._top_function_lib = None
-
         self._make_graph(layer_list)
-
         self._optimize_model(self.config.optimizers)
+
 
     def _make_graph(self, layer_list):
         for layer in layer_list:
             kind = layer['class_name']
             name = layer['name']
             inputs = layer.get('inputs', [])
+
             outputs = layer.get('outputs', [])
             if len(inputs) == 0:
                 inputs = [next(reversed(self.graph), 'input')]
             if len(outputs) == 0:
                 outputs = [name]
-
+            #print('layer HLS_Model:', layer, 'inputs', inputs, 'outputs',outputs)
             self.graph[name] = self.make_node(kind, name, layer, inputs, outputs)
 
     def _optimize_model(self, optimizers):

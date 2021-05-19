@@ -20,7 +20,7 @@ class KerasFileReader(object):
     def _find_data(self, layer_name, var_name):
         def h5_visitor_func(name):
             if var_name in name:
-                return name 
+                return name
 
         if 'model_weights' in list(self.h5file.keys()): # h5 file comes from model.save()
             layer_path = 'model_weights/{}'.format(layer_name)
@@ -120,7 +120,10 @@ def parse_default_keras_layer(keras_layer, input_names):
 
     if 'recurrent_activation' in keras_layer['config']:
         layer['recurrent_activation'] = keras_layer['config']['recurrent_activation']
+
+
     return layer
+
 
 
 def keras_to_hls(config):
@@ -154,7 +157,7 @@ def keras_to_hls(config):
     else:
         raise ValueError('No model found in config file.')
 
-    #print(model_arch)
+
 
     #Define layers to skip for conversion to HLS
     skip_layers = ['Dropout', 'Flatten']
@@ -171,6 +174,8 @@ def keras_to_hls(config):
     output_layers = None
 
     layer_config = None
+
+
     if model_arch['class_name'] == 'Sequential':
         print('Interpreting Sequential')
         layer_config = model_arch['config']
@@ -182,7 +187,6 @@ def keras_to_hls(config):
             input_layer['class_name'] = 'InputLayer'
             input_layer['input_shape'] = layer_config[0]['config']['batch_input_shape'][1:]
             layer_list.append(input_layer)
-            print('Input shape:', input_layer['input_shape'])
     elif model_arch['class_name'] in ['Model', 'Functional']:
         print('Interpreting Model')
         layer_config = model_arch['config']['layers']
@@ -197,7 +201,7 @@ def keras_to_hls(config):
     output_shapes = {}
     output_shape = None
 
-    print('Topology:')
+    #print('Topology:')
     for keras_layer in layer_config:
         if 'batch_input_shape' in keras_layer['config']:
             input_shapes = [keras_layer['config']['batch_input_shape']]
@@ -207,6 +211,7 @@ def keras_to_hls(config):
             else:
                 # Sequential model, so output_shape from the previous layer is still valid
                 input_shapes = [output_shape]
+                #print("Input_shapes_Topology",input_shapes)
 
         keras_class = keras_layer['class_name']
 
@@ -235,13 +240,13 @@ def keras_to_hls(config):
             input_names = None
 
         layer, output_shape = layer_handlers[keras_class](keras_layer, input_names, input_shapes, reader, config)
-
-        print('Layer name: {}, layer type: {}, current shape: {}'.format(layer['name'], layer['class_name'], input_shapes))
         layer_list.append( layer )
         if 'activation' in layer and layer['class_name'] not in ['Activation', 'LeakyReLU', 'ThresholdedReLU', 'ELU', 'PReLU', 'Softmax', 'LSTM']:# + qkeras_layers:
             act_layer = {}
+
             act_layer['name'] = layer['name'] + '_' + layer['activation']
             act_layer['activation'] = layer['activation']
+
             if 'activ_param' in layer:
                 act_layer['activ_param'] = layer['activ_param']
                 act_layer['class_name'] = layer['activation']
@@ -252,16 +257,26 @@ def keras_to_hls(config):
             inputs_map[layer['name']] = act_layer['name']
             if output_layers is not None and layer['name'] in output_layers:
                 output_layers = [act_layer['name'] if name == layer['name'] else name for name in output_layers]
+
             layer_list.append(act_layer)
+
+
+
+
 
         assert(output_shape is not None)
 
         output_shapes[layer['name']] = output_shape
 
+
     #################
     ## Generate HLS
     #################
+    ## Read file lstm_cell.h
 
-    print('Creating HLS model')
+    #print('Creating HLS model')
     hls_model = HLSModel(config, reader, layer_list, input_layers, output_layers)
+    #print('HLS_MODEL: ', hls_model)
+    #print('**Input_Layers**', input_layers)
+    #print('**Output_Layers**', output_layers)
     return hls_model

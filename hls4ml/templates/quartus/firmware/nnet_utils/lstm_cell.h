@@ -4,7 +4,7 @@
 #include "HLS/hls.h"
 #include <stdio.h>
 #include "HLS/ac_int.h"
-#ifdef __INTELFPGA_COMPILER__ 
+#ifdef __INTELFPGA_COMPILER__
 #include "HLS/ac_fixed.h"
 #else
 #include "ref/ac_fixed.h"
@@ -34,7 +34,7 @@ template<class data_T, class res_T,typename CONFIG_T,class WEIGHT_T>
 void multiply_W(data_T input, res_T *out, const WEIGHT_T *weight) {
     MULTIPLY_W_LOOP:
     #pragma unroll
-    for (int j = 0; j < CONFIG_T::n_in; j++) { 
+    for (int j = 0; j < CONFIG_T::n_in; j++) {
       //out[j] = input * WEIGHT_T::kernel[j];
       out[j] = input * weight[j];
     }
@@ -87,19 +87,19 @@ void add_vectors(data_T *in1,data_T *in2,res_T *out) {
 }
 template<class data_T, typename CONFIG_T,class  WEIGHT_T>
 void lstm_cell(
-          data_T *hidden_state, 
-          data_T *hidden_state_o, 
-          data_T *cell_state, 
-          data_T *cell_state_o, 
+          data_T *hidden_state,
+          data_T *hidden_state_o,
+          data_T *cell_state,
+          data_T *cell_state_o,
           data_T inputs ,
-          WEIGHT_T *WI   , WEIGHT_T *WF   , WEIGHT_T *WC   , WEIGHT_T *WO  , 
-          WEIGHT_T *RWI  , WEIGHT_T *RWF  , WEIGHT_T *RWC  , WEIGHT_T *RWO , 
+          WEIGHT_T *WI   , WEIGHT_T *WF   , WEIGHT_T *WC   , WEIGHT_T *WO  ,
+          WEIGHT_T *RWI  , WEIGHT_T *RWF  , WEIGHT_T *RWC  , WEIGHT_T *RWO ,
           WEIGHT_T *BI   , WEIGHT_T *BF   , WEIGHT_T *BC   , WEIGHT_T *BO);
-    
+
 template<class data_T, class res_T,class CONFIG_T ,class WEIGHT_T>
 void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
-          const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  , 
-          const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO , 
+          const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  ,
+          const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO ,
           const WEIGHT_T *BI   , const WEIGHT_T *BF   , const WEIGHT_T *BC   , const WEIGHT_T *BO){
 
   data_T hidden_state[CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
@@ -117,7 +117,7 @@ void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
     hidden_state[x][0]=0;
     cell_state[x][0]=0;
   }
-  
+
   #pragma unroll
   #pragma ivdep
   for (int j=CONFIG_T::n_timestamp-1;j>0; j--){
@@ -148,13 +148,13 @@ void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
 
 template<class data_T, typename CONFIG_T, typename WEIGHT_T>
 void lstm_cell(
-          data_T *hidden_state, 
-          data_T *hidden_state_o, 
-          data_T *cell_state, 
-          data_T *cell_state_o, 
+          data_T *hidden_state,
+          data_T *hidden_state_o,
+          data_T *cell_state,
+          data_T *cell_state_o,
           data_T inputs,
-          const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  , 
-          const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO , 
+          const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  ,
+          const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO ,
           const WEIGHT_T *BI   , const WEIGHT_T *BF   , const WEIGHT_T *BC   , const WEIGHT_T *BO){
 
         //----------------------
@@ -195,9 +195,9 @@ void lstm_cell(
         //intermediate variable cell calculation
         data_T cell_act_multp[lstm_config::n_in] hls_register;
         data_T cell_act_add[lstm_config::n_in] hls_register;
-    
 
-        //-----------Gate I Calculations 
+
+        //-----------Gate I Calculations
         //Weight multiplication
         multiply_W<data_T,data_T,CONFIG_T,WEIGHT_T>(inputs, i_afterW , WI);
         //Bias addition
@@ -206,9 +206,10 @@ void lstm_cell(
         multiply_U<data_T,data_T,CONFIG_T,WEIGHT_T>(hidden_state, i_hiddenCand,RWI);
         add_vectors<data_T,data_T,CONFIG_T>(i_afterBias, i_hiddenCand,i_afterAdd);
         //Activation
-        nnet::sigmoid<data_T,data_T,CONFIG_T>(i_afterAdd, gate_i);  //recurrent_activation
+        //hls_fpga insert recurrent_activation --- Gate I
 
-        //-----------Gate F Calculations 
+
+        //-----------Gate F Calculations
         //Weight multiplication
         multiply_W<data_T,data_T,CONFIG_T,WEIGHT_T>(inputs, f_afterW , WF);
         //Bias addition
@@ -217,9 +218,10 @@ void lstm_cell(
         multiply_U<data_T,data_T,CONFIG_T,WEIGHT_T>(hidden_state, f_hiddenCand,RWF);
         add_vectors<data_T,data_T,CONFIG_T>(f_afterBias, f_hiddenCand,f_afterAdd);
         //Activation
-        nnet::sigmoid<data_T,data_T,CONFIG_T>(f_afterAdd, gate_f);  //recurrent_activation
+        //hls_fpga insert recurrent_activation --- Gate F
 
-        //-----------Gate C Calculations 
+
+        //-----------Gate C Calculations
          //Weight multiplication
         multiply_W<data_T,data_T,CONFIG_T,WEIGHT_T>(inputs, c_afterW , WC);
         //Bias addition
@@ -228,29 +230,29 @@ void lstm_cell(
         multiply_U<data_T,data_T,CONFIG_T,WEIGHT_T>(hidden_state, c_hiddenCand,RWC);
         add_vectors<data_T,data_T,CONFIG_T>(c_afterBias, c_hiddenCand,c_afterAdd);
         //Activation
-        nnet::dense_tanh<data_T,data_T,CONFIG_T>(c_afterAdd, gate_c);  //recurrent_activation
+        //hls_fpga insert activation  --- Gate C
+
 
         //-----------gate I and C multiply
         multiply_vectors<data_T,data_T,CONFIG_T>(gate_i, gate_c, gate_ic);
 
-        //-----------Gate O Calculations 
+        //-----------Gate O Calculations
         multiply_W<data_T,data_T,CONFIG_T,WEIGHT_T>(inputs, o_afterW,WO);
         add_bias<data_T,data_T,CONFIG_T,WEIGHT_T>(o_afterW,o_afterBias,BO);
         multiply_U<data_T,data_T,CONFIG_T,WEIGHT_T>(hidden_state, o_hiddenCand,RWO);
         add_vectors<data_T,data_T,CONFIG_T>(o_afterBias, o_hiddenCand ,o_afterAdd);
-        nnet::sigmoid<data_T,data_T,CONFIG_T>(o_afterAdd, gate_o); // recurrent_activation
+        //hls_fpga insert recurrent_activation  --- Gate O
 
 
         //-----------Cell State Calculation
         multiply_vectors<data_T,data_T,CONFIG_T>(gate_f, cell_state, cell_act_multp);
         add_vectors<data_T,data_T,CONFIG_T>(gate_ic, cell_act_multp,cell_act_add);
 
-
-
         //-----------Forgot gate Calculation
-        nnet::dense_tanh<data_T,data_T,CONFIG_T>(cell_act_add, gate_forget); //activation
+        //hls_fpga insert activation  --- Forget Gate'
 
         multiply_vectors<data_T,data_T,CONFIG_T>(gate_o, gate_forget ,  h);
+
 
        OUTPUT_WRITE_LOOP:
         #pragma unroll
