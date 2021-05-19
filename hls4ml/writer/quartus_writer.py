@@ -116,12 +116,9 @@ class QuartusWriter(Writer):
 
             elif '//hls-fpga-machine-learning insert layers' in line:
                 for layer in model.get_layers():
-                    if(layer_return_sequences == 1):
-                        return_sequences = layer.get_attr('return_sequences')
-                        print("return_sequences", return_sequences)
-                        layer_return_sequences += 1
-                    else:
-                        layer_return_sequences += 1
+                    not_none_return_sequences = layer.get_attr('return_sequences')
+                    if(not_none_return_sequences == True or not_none_return_sequences == False):
+                        return_sequences = not_none_return_sequences
                 if not return_sequences:
                     newline = line + '\n'
                     inputs = model.get_input_variables()
