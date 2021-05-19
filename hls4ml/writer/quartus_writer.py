@@ -886,51 +886,51 @@ class QuartusWriter(Writer):
             archive.add(model.config.get_output_dir(), recursive=True)
 
     def write_activation_lstm(self, model): #layer_rec_activation,layer_activation
-        if(model.inputs[0] == 'lstm_input'):
-            dstpath = './{}/firmware/nnet_utils/lstm_cell.h'.format(model.config.get_output_dir())
-            activation_lstm = 0
 
-            for layer in model.get_layers():
-                if(activation_lstm == 1):
-                    layer_activation = layer.get_attr('activation')
-                    layer_rec_activation =layer.get_attr('recurrent_activation')
-                    activation_lstm += 1
-                else:
-                    activation_lstm += 1
+        dstpath = './{}/firmware/nnet_utils/lstm_cell.h'.format(model.config.get_output_dir())
+        activation_lstm = 0
 
-            with open(dstpath,"r") as myfile:
-                my_lines = myfile.readlines()
-            taille_my_lines=len(my_lines)
+        for layer in model.get_layers():
+            if(activation_lstm == 1):
+                layer_activation = layer.get_attr('activation')
+                layer_rec_activation =layer.get_attr('recurrent_activation')
+                activation_lstm += 1
+            else:
+                activation_lstm += 1
 
-            i = 0
-            while i < taille_my_lines:
+        with open(dstpath,"r") as myfile:
+            my_lines = myfile.readlines()
+        taille_my_lines=len(my_lines)
 
-                actv_gate_f = my_lines[i].find('//hls_fpga insert activation  --- Forget Gate')
-                actv_gate_c = my_lines[i].find('//hls_fpga insert activation  --- Gate C')
+        i = 0
+        while i < taille_my_lines:
 
-                rec_actv_gate_i = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate I')
-                rec_actv_gate_f = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate F')
-                rec_actv_gate_o = my_lines[i].find('//hls_fpga insert recurrent_activation  --- Gate O')
+            actv_gate_f = my_lines[i].find('//hls_fpga insert activation  --- Forget Gate')
+            actv_gate_c = my_lines[i].find('//hls_fpga insert activation  --- Gate C')
 
-                if actv_gate_f != -1:
-                    res = "\t\t\t\t//hls_fpga insert activation  --- Forget Gate\n\t\t\t\tnnet::" + layer_activation + "<data_T,data_T,CONFIG_T>(cell_act_add, gate_forget); //activation\n"
-                elif actv_gate_c != -1:
-                    res = "\t\t\t\t//hls_fpga insert activation  --- Gate C\n\t\t\t\tnnet::" + layer_activation + "<data_T,data_T,CONFIG_T>(c_afterAdd, gate_c);  //activation\n"
+            rec_actv_gate_i = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate I')
+            rec_actv_gate_f = my_lines[i].find('//hls_fpga insert recurrent_activation --- Gate F')
+            rec_actv_gate_o = my_lines[i].find('//hls_fpga insert recurrent_activation  --- Gate O')
 
-                elif rec_actv_gate_i != -1:
-                    res = "\t\t\t\t//hls_fpga insert recurrent_activation --- Gate I\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(i_afterAdd, gate_i);  //recurrent_activation\n"
-                elif rec_actv_gate_f != -1:
-                    res = "\t\t\t\t//hls_fpga insert recurrent_activation --- Gate F\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(f_afterAdd, gate_f);  //recurrent_activation\n"
-                elif rec_actv_gate_o != -1:
-                    res = "\t\t\t\t//hls_fpga insert recurrent_activation  --- Gate O\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(o_afterAdd, gate_o); // recurrent_activation\n"
-                else:
-                    res = my_lines[i]
+            if actv_gate_f != -1:
+                res = "\t\t\t\t//hls_fpga insert activation  --- Forget Gate\n\t\t\t\tnnet::" + layer_activation + "<data_T,data_T,CONFIG_T>(cell_act_add, gate_forget); //activation\n"
+            elif actv_gate_c != -1:
+                res = "\t\t\t\t//hls_fpga insert activation  --- Gate C\n\t\t\t\tnnet::" + layer_activation + "<data_T,data_T,CONFIG_T>(c_afterAdd, gate_c);  //activation\n"
 
-                my_lines[i] = res
-                i += 1
+            elif rec_actv_gate_i != -1:
+                res = "\t\t\t\t//hls_fpga insert recurrent_activation --- Gate I\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(i_afterAdd, gate_i);  //recurrent_activation\n"
+            elif rec_actv_gate_f != -1:
+                res = "\t\t\t\t//hls_fpga insert recurrent_activation --- Gate F\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(f_afterAdd, gate_f);  //recurrent_activation\n"
+            elif rec_actv_gate_o != -1:
+                res = "\t\t\t\t//hls_fpga insert recurrent_activation  --- Gate O\n\t\t\t\tnnet::" + layer_rec_activation + "<data_T,data_T,CONFIG_T>(o_afterAdd, gate_o); // recurrent_activation\n"
+            else:
+                res = my_lines[i]
 
-            with open(dstpath, "w") as myfile:
-                myfile.writelines(my_lines)
+            my_lines[i] = res
+            i += 1
+
+        with open(dstpath, "w") as myfile:
+            myfile.writelines(my_lines)
 
     def write_output_dimention(self, model):
         dstpath = './{}/firmware/nnet_utils/lstm_cell.h'.format(model.config.get_output_dir())
@@ -999,7 +999,7 @@ class QuartusWriter(Writer):
             myfile.writelines(my_lines)
 
     def write_lstm(self, model):
-        if(model.inputs[0] == 'lstm_input'):
+        if(model._class_name == 'LSTM'):
             self.write_activation_lstm(model)
             self.write_input_dimention(model)
             self.write_output_dimention(model)
