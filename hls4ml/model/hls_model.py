@@ -266,7 +266,7 @@ class HLSModel(object):
             if name == 'LSTM':
                 self._class_name = name
                 self.sliding_window = self.config.sliding_window
-                self.config.sliding_window = True
+                self.config.sliding_window = False
                 #self.sliding_window_2 = layer['Sliding_window']
                 print("self.sliding_window ", self.sliding_window)
                 #print("self.sliding_window_2 ", self.sliding_window_2)

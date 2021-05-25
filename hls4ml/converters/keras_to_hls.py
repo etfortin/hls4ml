@@ -124,7 +124,6 @@ def parse_default_keras_layer(keras_layer, input_names):
     if 'return_sequences' in keras_layer['config']:
         layer['return_sequences'] = keras_layer['config']['return_sequences']
 
-
     return layer
 
 

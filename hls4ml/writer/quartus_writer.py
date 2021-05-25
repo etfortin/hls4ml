@@ -890,7 +890,7 @@ class QuartusWriter(Writer):
         for layer in model.get_layers():
             if(activation_lstm == 1):
                 layer_activation = layer.get_attr('activation')
-                layer_rec_activation =layer.get_attr('recurrent_activation')
+                layer_rec_activation = layer.get_attr('recurrent_activation')
                 activation_lstm += 1
             else:
                 activation_lstm += 1
@@ -939,7 +939,7 @@ class QuartusWriter(Writer):
         for layer in model.get_layers():
             if(layer_return_sequences == 1):
                 return_sequences = layer.get_attr('return_sequences')
-                print( return_sequences, "begin")
+                print(return_sequences, "begin")
                 layer_return_sequences += 1
             else:
                 layer_return_sequences += 1
