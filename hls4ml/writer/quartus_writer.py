@@ -204,7 +204,7 @@ class QuartusWriter(Writer):
                         for j in lines:
                             newline += indent + j + '\n'
                         newline += '}\n'
-                        newline += indent + 'return ' + name + '[0];\n'
+                        newline += indent + 'return ' + name + '[N_INPUT_1_1 - 1];\n'
 
             #Just copy line
             else:
@@ -998,8 +998,8 @@ class QuartusWriter(Writer):
     def write_lstm(self, model):
         if(model._class_name == 'LSTM'):
             self.write_activation_lstm(model)
-            self.write_input_dimention(model)
-            self.write_output_dimention(model)
+            #self.write_input_dimention(model)
+            #self.write_output_dimention(model)
 
     def write_hls(self, model):
         # print('Writing HLS project')

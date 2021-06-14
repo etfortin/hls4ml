@@ -1,6 +1,6 @@
 
-KerasJson: ./models/KERAS_LSTM_1.json
-KerasH5:   ./models/KERAS_LSTM_weights_1.h5
+KerasJson: ./models/quantized_lstm_model.json
+KerasH5:   ./models/quantized_lstm_14_4_weights_keras.h5
 OutputDir: quartus_prj/KERAS_LSTM-CPPM
 ProjectName: myproject
 FPGAPart: 1SG280HU2F50E2VG
@@ -22,4 +22,4 @@ HLSConfig:
     Lstm:
       table_size : 4096
       Precision: <24,5,true>
-      Sliding_window: False
+      Sliding_window: false

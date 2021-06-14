@@ -187,6 +187,8 @@ lstm_config_template = """struct config{index} : lstm_config {{
     static const unsigned n_out = {n_in};
     static const unsigned n_timestamp = {n_timestamp};
     static const unsigned table_size = {table_size};
+    static const unsigned sliding_window = {sliding_window};
+    static const unsigned return_sequences = {return_sequences};
 }};\n"""
 lstm_function_template = 'lstm_network<{input_t}, {output_t}, {config} ,{input_t}>({input}, {output}, {weights});'
 lstm_include_list = ['nnet_utils/lstm_cell.h']

@@ -48,9 +48,9 @@ int main(int argc, char **argv)
   std::string iline;
   std::string pline;
   int e = 0;
-  int num_iterations = 10;
-  //int num_iterations = std::count(std::istreambuf_iterator<char>(fcount),
-  //                 std::istreambuf_iterator<char>(), '\n');
+  //int num_iterations = 100000;
+  int num_iterations = std::count(std::istreambuf_iterator<char>(fcount),
+                   std::istreambuf_iterator<char>(), '\n');
   if (fin.is_open() && fpr.is_open()) {
     //hls-fpga-machine-learning insert component-io
     std::vector<std::vector<float>> pr(num_iterations,std::vector<float>());

@@ -24,7 +24,10 @@ struct lstm_config : public nnet::activ_config{
 };
 
 
-
+#ifndef HLS_SYNTHESIS
+  #include <iostream>
+  #include <fstream>
+#endif
 #ifndef TIMESTAMP_UNROLLING
   #define TIMESTAMP_UNROLLING
 #endif
@@ -33,10 +36,30 @@ struct lstm_config : public nnet::activ_config{
 template<class data_T, class res_T,typename CONFIG_T,class WEIGHT_T>
 void multiply_W(data_T input, res_T *out, const WEIGHT_T *weight) {
     MULTIPLY_W_LOOP:
-    #pragma unroll
-    for (int j = 0; j < CONFIG_T::n_in; j++) {
-      //out[j] = input * WEIGHT_T::kernel[j];
-      out[j] = input * weight[j];
+    if(input != 1){
+      #ifndef HLS_SYNTHESIS
+      //   std::cout<<"Opçao caca"<<std::endl;
+      #endif
+      #pragma unroll
+      for (int j = 0; j < CONFIG_T::n_in; j++) {
+        //out[j] = input * WEIGHT_T::kernel[j];
+        out[j] = input * weight[j];
+      }
+    }
+
+    else{
+      #ifndef HLS_SYNTHESIS
+         //std::cout<<"Opçao baba"<<std::endl;
+      #endif
+      #pragma unroll
+      for (int i = 0; i < CONFIG_T::n_in ; i++) {
+          out[i] = 0;
+          #pragma unroll
+           for (int j = 0; j < CONFIG_T::n_in; j++) {
+              //out[i] += /*out[i] +*/ inputs[j] * WEIGHT_T::recurrent_kernel[j][i];
+              out[i] += /*out[i] +*/ input[j] * weight[j*CONFIG_T::n_in +i];
+          }
+      }
     }
 }
 template<class data_T, class res_T,typename CONFIG_T,class WEIGHT_T>
@@ -96,7 +119,418 @@ void lstm_cell(
           WEIGHT_T *RWI  , WEIGHT_T *RWF  , WEIGHT_T *RWC  , WEIGHT_T *RWO ,
           WEIGHT_T *BI   , WEIGHT_T *BF   , WEIGHT_T *BC   , WEIGHT_T *BO);
 
+
 template<class data_T, class res_T,class CONFIG_T ,class WEIGHT_T>
+  void lstm_network(data_T input0[CONFIG_T::n_timestamp],res_T res[CONFIG_T::n_out],
+            const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  ,
+            const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO ,
+            const WEIGHT_T *BI   , const WEIGHT_T *BF   , const WEIGHT_T *BC   , const WEIGHT_T *BO){
+
+    data_T hidden_state[CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T cell_state  [CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T hidden_state_temp[CONFIG_T::n_in] hls_register    ;
+    data_T cell_state_temp  [CONFIG_T::n_in] hls_register    ;
+    data_T h[CONFIG_T::n_in] hls_register    ;
+    data_T c[CONFIG_T::n_in] hls_register    ;
+
+    static data_T inputs[CONFIG_T::n_timestamp] hls_register;
+    #ifndef HLS_SYNTHESIS
+       std::cout<<"Opçao 1"<<std::endl;
+    #endif
+
+    INIT_LOOP:
+    #pragma unroll
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+      hidden_state[x][0]=0;
+      cell_state[x][0]=0;
+    }
+
+    #pragma unroll
+    #pragma ivdep
+    //input0 - verification
+    for (int j=0; j<CONFIG_T::n_timestamp; j++){
+    inputs[j] = input0[j];
+  }
+
+    #pragma unroll TIMESTAMP_UNROLLING
+    for (int i=0; i < CONFIG_T::n_timestamp; i++){
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state_temp[x] = hidden_state[x][i];
+        cell_state_temp[x]   = cell_state[x][i];
+      }
+      lstm_cell<data_T,CONFIG_T,WEIGHT_T>(hidden_state_temp,h,cell_state_temp,c,inputs[i],WI,WF,WC,WO,RWI,RWF,RWC,RWO,BI,BF,BC,BO);
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state[x][i+1]=h[x];
+        cell_state[x][i+1]=c[x];
+      }
+    }
+    #pragma unroll
+    //output - verification
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+        res[x]= hidden_state[x][CONFIG_T::n_timestamp];
+    }
+  }
+
+
+template<class data_T, class res_T,class CONFIG_T ,class WEIGHT_T>
+  void lstm_network(data_T input0[CONFIG_T::n_timestamp],res_T res[CONFIG_T::n_timestamp][CONFIG_T::n_out],
+            const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  ,
+            const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO ,
+            const WEIGHT_T *BI   , const WEIGHT_T *BF   , const WEIGHT_T *BC   , const WEIGHT_T *BO){
+
+    data_T hidden_state[CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T cell_state  [CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T hidden_state_temp[CONFIG_T::n_in] hls_register    ;
+    data_T cell_state_temp  [CONFIG_T::n_in] hls_register    ;
+    data_T h[CONFIG_T::n_in] hls_register    ;
+    data_T c[CONFIG_T::n_in] hls_register    ;
+
+    static data_T inputs[CONFIG_T::n_timestamp] hls_register;
+    #ifndef HLS_SYNTHESIS
+       std::cout<<"Opçao 2"<<std::endl;
+    #endif
+    INIT_LOOP:
+    #pragma unroll
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+      hidden_state[x][0]=0;
+      cell_state[x][0]=0;
+    }
+
+    #pragma unroll
+    #pragma ivdep
+
+    //input0 - verification
+    for (int j=0; j<CONFIG_T::n_timestamp; j++){
+    inputs[j] = input0[j];
+  }
+
+
+    #pragma unroll TIMESTAMP_UNROLLING
+    for (int i=0; i < CONFIG_T::n_timestamp; i++){
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state_temp[x] = hidden_state[x][i];
+        cell_state_temp[x]   = cell_state[x][i];
+      }
+      lstm_cell<data_T,CONFIG_T,WEIGHT_T>(hidden_state_temp,h,cell_state_temp,c,inputs[i],WI,WF,WC,WO,RWI,RWF,RWC,RWO,BI,BF,BC,BO);
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state[x][i+1]=h[x];
+        cell_state[x][i+1]=c[x];
+      }
+    }
+    #pragma unroll
+    //output - verification
+
+    for(int x = 0; x < CONFIG_T::n_timestamp; x++){
+      for(int h = 0; h < CONFIG_T::n_in; h++){
+          res[x][h]= hidden_state[h][x+1];
+      }
+    }
+  }
+
+template<class data_T, class res_T,class CONFIG_T ,class WEIGHT_T>
+  void lstm_network(data_T input0[CONFIG_T::n_timestamp][CONFIG_T::n_in],res_T res[CONFIG_T::n_out],
+            const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  ,
+            const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO ,
+            const WEIGHT_T *BI   , const WEIGHT_T *BF   , const WEIGHT_T *BC   , const WEIGHT_T *BO){
+
+    data_T hidden_state[CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T cell_state  [CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T hidden_state_temp[CONFIG_T::n_in] hls_register    ;
+    data_T cell_state_temp  [CONFIG_T::n_in] hls_register    ;
+    data_T h[CONFIG_T::n_in] hls_register    ;
+    data_T c[CONFIG_T::n_in] hls_register    ;
+
+    static data_T inputs[CONFIG_T::n_timestamp][CONFIG_T::n_in] hls_register;
+    #ifndef HLS_SYNTHESIS
+       std::cout<<"Opçao 3"<<std::endl;
+    #endif
+    INIT_LOOP:
+    #pragma unroll
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+      hidden_state[x][0]=0;
+      cell_state[x][0]=0;
+    }
+
+    #pragma unroll
+    #pragma ivdep
+    //input0 - verification
+    for (int j=0; j<CONFIG_T::n_timestamp; j++){
+      for (int z=0; z<CONFIG_T::n_in; z++){
+      inputs[j][z] = input0[j][z];
+    }
+  }
+    #pragma unroll TIMESTAMP_UNROLLING
+    for (int i=0; i < CONFIG_T::n_timestamp; i++){
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state_temp[x] = hidden_state[x][i];
+        cell_state_temp[x]   = cell_state[x][i];
+      }
+      lstm_cell<data_T,CONFIG_T,WEIGHT_T>(hidden_state_temp,h,cell_state_temp,c,inputs[i],WI,WF,WC,WO,RWI,RWF,RWC,RWO,BI,BF,BC,BO);
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state[x][i+1]=h[x];
+        cell_state[x][i+1]=c[x];
+      }
+    }
+    #pragma unroll
+    //output - verification
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+        res[x]= hidden_state[x][CONFIG_T::n_timestamp];
+    }
+  }
+
+
+template<class data_T, class res_T,class CONFIG_T ,class WEIGHT_T>
+  void lstm_network(data_T input0[CONFIG_T::n_timestamp][CONFIG_T::n_in],res_T res[CONFIG_T::n_timestamp][CONFIG_T::n_out],
+            const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  ,
+            const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO ,
+            const WEIGHT_T *BI   , const WEIGHT_T *BF   , const WEIGHT_T *BC   , const WEIGHT_T *BO){
+
+    data_T hidden_state[CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T cell_state  [CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T hidden_state_temp[CONFIG_T::n_in] hls_register    ;
+    data_T cell_state_temp  [CONFIG_T::n_in] hls_register    ;
+    data_T h[CONFIG_T::n_in] hls_register    ;
+    data_T c[CONFIG_T::n_in] hls_register    ;
+
+    static data_T inputs[CONFIG_T::n_timestamp][CONFIG_T::n_in] hls_register;
+    #ifndef HLS_SYNTHESIS
+       std::cout<<"Opçao 4"<<std::endl;
+    #endif
+    INIT_LOOP:
+    #pragma unroll
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+      hidden_state[x][0]=0;
+      cell_state[x][0]=0;
+    }
+
+    #pragma unroll
+    #pragma ivdep
+
+    //input0 - verification
+      for (int j=0; j<CONFIG_T::n_timestamp; j++){
+        for (int z=0; z<CONFIG_T::n_in; z++){
+        inputs[j][z] = input0[j][z];
+      }
+    }
+
+    #pragma unroll TIMESTAMP_UNROLLING
+    for (int i=0; i < CONFIG_T::n_timestamp; i++){
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state_temp[x] = hidden_state[x][i];
+        cell_state_temp[x]   = cell_state[x][i];
+      }
+      lstm_cell<data_T,CONFIG_T,WEIGHT_T>(hidden_state_temp,h,cell_state_temp,c,inputs[i],WI,WF,WC,WO,RWI,RWF,RWC,RWO,BI,BF,BC,BO);
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state[x][i+1]=h[x];
+        cell_state[x][i+1]=c[x];
+      }
+    }
+    #pragma unroll
+    //output - verification
+    for(int x = 0; x < CONFIG_T::n_timestamp; x++){
+      for(int h = 0; h < CONFIG_T::n_in; h++){
+          res[x][h]= hidden_state[h][x+1];
+      }
+    }
+  }
+
+  template<class data_T, class res_T,class CONFIG_T ,class WEIGHT_T>
+  void lstm_network(data_T input0,res_T res[CONFIG_T::n_timestamp][CONFIG_T::n_out],
+            const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  ,
+            const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO ,
+            const WEIGHT_T *BI   , const WEIGHT_T *BF   , const WEIGHT_T *BC   , const WEIGHT_T *BO){
+
+    data_T hidden_state[CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T cell_state  [CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T hidden_state_temp[CONFIG_T::n_in] hls_register    ;
+    data_T cell_state_temp  [CONFIG_T::n_in] hls_register    ;
+    data_T h[CONFIG_T::n_in] hls_register    ;
+    data_T c[CONFIG_T::n_in] hls_register    ;
+
+    static data_T inputs[CONFIG_T::n_timestamp] hls_register;
+    #ifndef HLS_SYNTHESIS
+       std::cout<<"Opçao 5"<<std::endl;
+    #endif
+    INIT_LOOP:
+    #pragma unroll
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+      hidden_state[x][0]=0;
+      cell_state[x][0]=0;
+    }
+
+    #pragma unroll
+    #pragma ivdep
+    //input0 - verification
+    for (int j=1;j<CONFIG_T::n_timestamp; j++){
+      inputs[j-1] = inputs[j];
+    }
+    inputs[CONFIG_T::n_timestamp-1]=input0;
+
+    #pragma unroll TIMESTAMP_UNROLLING
+    for (int i=0; i < CONFIG_T::n_timestamp; i++){
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state_temp[x] = hidden_state[x][i];
+        cell_state_temp[x]   = cell_state[x][i];
+      }
+      lstm_cell<data_T,CONFIG_T,WEIGHT_T>(hidden_state_temp,h,cell_state_temp,c,inputs[i],WI,WF,WC,WO,RWI,RWF,RWC,RWO,BI,BF,BC,BO);
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state[x][i+1]=h[x];
+        cell_state[x][i+1]=c[x];
+      }
+    }
+    #pragma unroll
+    //output - verification
+    for(int x = 0; x < CONFIG_T::n_timestamp; x++){
+      for(int h = 0; h < CONFIG_T::n_in; h++){
+          res[x][h]= hidden_state[h][x+1];
+      }
+    }
+  }
+
+  template<class data_T, class res_T,class CONFIG_T ,class WEIGHT_T>
+  void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
+            const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  ,
+            const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO ,
+            const WEIGHT_T *BI   , const WEIGHT_T *BF   , const WEIGHT_T *BC   , const WEIGHT_T *BO){
+
+    data_T hidden_state[CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T cell_state  [CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+    data_T hidden_state_temp[CONFIG_T::n_in] hls_register    ;
+    data_T cell_state_temp  [CONFIG_T::n_in] hls_register    ;
+    data_T h[CONFIG_T::n_in] hls_register    ;
+    data_T c[CONFIG_T::n_in] hls_register    ;
+
+    static data_T inputs[CONFIG_T::n_timestamp] hls_register;
+    #ifndef HLS_SYNTHESIS
+       std::cout<<"Opçao 6"<<std::endl;
+    #endif
+    INIT_LOOP:
+    #pragma unroll
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+      hidden_state[x][0]=0;
+      cell_state[x][0]=0;
+    }
+
+    #pragma unroll
+    #pragma ivdep
+    //input0 - verification
+    for (int j=1;j<CONFIG_T::n_timestamp; j++){
+      inputs[j-1] = inputs[j];
+    }
+    inputs[CONFIG_T::n_timestamp-1]=input0;
+
+    #pragma unroll TIMESTAMP_UNROLLING
+    for (int i=0; i < CONFIG_T::n_timestamp; i++){
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state_temp[x] = hidden_state[x][i];
+        cell_state_temp[x]   = cell_state[x][i];
+      }
+      lstm_cell<data_T,CONFIG_T,WEIGHT_T>(hidden_state_temp,h,cell_state_temp,c,inputs[i],WI,WF,WC,WO,RWI,RWF,RWC,RWO,BI,BF,BC,BO);
+      #pragma unroll
+      for (int x = 0; x < CONFIG_T::n_in; x++) {
+        hidden_state[x][i+1]=h[x];
+        cell_state[x][i+1]=c[x];
+      }
+    }
+    #pragma unroll
+    //output - verification
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+        res[x]= hidden_state[x][CONFIG_T::n_timestamp];
+    }
+  }
+
+/*
+res_T _return_sequences(){
+  if(CONFIG_T::return_sequences == false ){
+    return res[CONFIG_T::n_out];
+  }
+  else{
+    return res[CONFIG_T::n_timestamp][CONFIG_T::n_out];
+  }
+}
+data_T _sliding_window(){
+  if(CONFIG_T::return_sequences == false ){
+    return input0[CONFIG_T::n_timestamp][CONFIG_T::n_in];
+  }
+  else{
+    return res[CONFIG_T::n_timestamp][CONFIG_T::n_out];
+  }
+}
+
+template<class data_T, class res_T,class CONFIG_T ,class WEIGHT_T>
+void lstm_network(data_T input0,res_T _return_sequences(),
+          const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  ,
+          const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO ,
+          const WEIGHT_T *BI   , const WEIGHT_T *BF   , const WEIGHT_T *BC   , const WEIGHT_T *BO){
+
+  data_T hidden_state[CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+  data_T cell_state  [CONFIG_T::n_in][CONFIG_T::n_timestamp + 1]     ;
+  data_T hidden_state_temp[CONFIG_T::n_in] hls_register    ;
+  data_T cell_state_temp  [CONFIG_T::n_in] hls_register    ;
+  data_T h[CONFIG_T::n_in] hls_register    ;
+  data_T c[CONFIG_T::n_in] hls_register    ;
+
+  #ifndef HLS_SYNTHESIS
+    std::cout<<"configuration_rs :"<< CONFIG_T::return_sequences  <<std::endl;
+  #endif
+
+  static data_T inputs[CONFIG_T::n_timestamp] hls_register;
+
+  INIT_LOOP:
+  #pragma unroll
+  for (int x = 0; x < CONFIG_T::n_in; x++) {
+    hidden_state[x][0]=0;
+    cell_state[x][0]=0;
+  }
+
+  #pragma unroll
+  #pragma ivdep
+  //input0 - verification
+
+  #pragma unroll TIMESTAMP_UNROLLING
+  for (int i=0; i < CONFIG_T::n_timestamp; i++){
+    #pragma unroll
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+      hidden_state_temp[x] = hidden_state[x][i];
+      cell_state_temp[x]   = cell_state[x][i];
+    }
+    lstm_cell<data_T,CONFIG_T,WEIGHT_T>(hidden_state_temp,h,cell_state_temp,c,inputs[i],WI,WF,WC,WO,RWI,RWF,RWC,RWO,BI,BF,BC,BO);
+    #pragma unroll
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+      hidden_state[x][i+1]=h[x];
+      cell_state[x][i+1]=c[x];
+    }
+  }
+  #pragma unroll
+  if(CONFIG_T::return_sequences == false){
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+        res[x]= hidden_state[x][CONFIG_T::n_timestamp];
+    }
+  }
+  }
+  else{
+    for (int x = 0; x < CONFIG_T::n_in; x++) {
+        for(int h = 0; h < CONFIG_T::n_timestamp; h++){
+          res[h][x]= hidden_state[x][h];
+        }
+    }
+  }
+  }
+}
+*/
+
+/*
 void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
           const WEIGHT_T *WI   , const WEIGHT_T *WF   , const WEIGHT_T *WC   , const WEIGHT_T *WO  ,
           const WEIGHT_T *RWI  , const WEIGHT_T *RWF  , const WEIGHT_T *RWC  , const WEIGHT_T *RWO ,
@@ -108,6 +542,10 @@ void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
   data_T cell_state_temp  [CONFIG_T::n_in] hls_register    ;
   data_T h[CONFIG_T::n_in] hls_register    ;
   data_T c[CONFIG_T::n_in] hls_register    ;
+
+  #ifndef HLS_SYNTHESIS
+    std::cout<<"configuration_rs :"<< CONFIG_T::return_sequences  <<std::endl;
+  #endif
 
   static data_T inputs[CONFIG_T::n_timestamp] hls_register;
 
@@ -139,7 +577,7 @@ void lstm_network(data_T input0,res_T res[CONFIG_T::n_out],
   #pragma unroll
   //output - verification
 }
-
+*/
 template<class data_T, typename CONFIG_T, typename WEIGHT_T>
 void lstm_cell(
           data_T *hidden_state,

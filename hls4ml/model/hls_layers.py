@@ -230,7 +230,6 @@ class Layer(object):
             self.outputs = [self.name]
 
         self.attributes = attributes
-
         self._function_template = self.model.config.backend.get_function_template(self.__class__.__name__)
         self._config_template = self.model.config.backend.get_config_template(self.__class__.__name__)
         self.include_list = self.model.config.backend.get_include_list(self.__class__.__name__)
@@ -937,6 +936,9 @@ class Lstm(Layer):
         params['n_in'] = self.get_attr('n_in')
         params['n_timestamp'] = self.get_attr('n_timestamp')
         params['table_size']=self.get_attr('table_size')
+        params['sliding_window'] = str(self.get_attr('Sliding_window')).lower()
+        print(params['sliding_window'], "olha aqui")
+        params['return_sequences'] = str(self.get_attr('return_sequences')).lower()
 
         return self._config_template.format(**params)
 
